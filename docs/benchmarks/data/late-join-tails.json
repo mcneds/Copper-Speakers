@@ -1,0 +1,611 @@
+{
+  "productionCommit": "2d6146c11b98acf6eda022f38199edc3fa5ff22b",
+  "scope": "Same-client prepared-tail probe; not two-player synchronization, login, resource-pack delivery or production listener admission. All attempts retained. Functional-only runs contribute no timing samples.",
+  "machine": {
+    "cpu": "Intel Core i5-12450H",
+    "logicalProcessors": 12,
+    "memoryGiB": 16,
+    "os": "Windows 11 Home 10.0.26200",
+    "audio": "G733 OpenAL device"
+  },
+  "measurementSourceSha256": "373786a4d5691c359e4f7e29067b340d154fb0b869926e86cfbf0d93098c29e7",
+  "fixture": {
+    "sourceSha1": "d4313530b3100f824e2f0b2adeed165b0b816267",
+    "fullFrames": 8173618,
+    "sampleRate": 44100,
+    "scope": "Private generated test audio; not a production resource pack.",
+    "tails": [
+      {
+        "offsetSeconds": 6,
+        "frames": 7909018,
+        "bytes": 1608076
+      },
+      {
+        "offsetSeconds": 12,
+        "frames": 7644418,
+        "bytes": 1572888
+      }
+    ]
+  },
+  "attempts": [
+    {
+      "name": "tails-native-01",
+      "launch": {
+        "mode": "tails",
+        "started": 1793047305.6681705,
+        "status": "failed-launch-or-test",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "pid": 10604,
+        "exitCode": 3221225477,
+        "finished": 1793047335.0650854
+      },
+      "javaRuntime": "Zulu 25.0.5",
+      "failureStage": "Native access violation during client resource startup, before test measurements"
+    },
+    {
+      "name": "tails-native-02",
+      "launch": {
+        "mode": "tails",
+        "started": 1793047413.3585746,
+        "status": "failed-launch-or-test",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "pid": 40552,
+        "exitCode": 3221225477,
+        "finished": 1793047440.225277
+      },
+      "javaRuntime": "Zulu 25.0.5",
+      "failureStage": "Native access violation during client resource startup, before test measurements"
+    },
+    {
+      "name": "tails-temurin-01",
+      "launch": {
+        "mode": "tails",
+        "started": 1793047526.7532403,
+        "status": "failed-launch-or-test",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "pid": 34640,
+        "exitCode": 3221225477,
+        "finished": 1793047552.177369
+      },
+      "javaRuntime": "Temurin 25.0.4.1",
+      "failureStage": "Native access violation during client resource startup, before test measurements"
+    },
+    {
+      "name": "tails-native-04",
+      "launch": {
+        "mode": "tails",
+        "started": 1793047836.1003842,
+        "status": "failed-launch-or-test",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "pid": 22520,
+        "exitCode": 3221225477,
+        "finished": 1793047863.018653
+      },
+      "javaRuntime": "Zulu 25.0.5",
+      "failureStage": "Native access violation during client resource startup, before test measurements",
+      "note": "Used the saved options from the successful sections probe; still failed before measurement."
+    },
+    {
+      "name": "tails-functional-01",
+      "launch": {
+        "mode": "tails",
+        "started": 1793047900.9701505,
+        "status": "complete",
+        "diagnosticFlags": [
+          "-XX:TieredStopAtLevel=1",
+          "-XX:ActiveProcessorCount=4"
+        ],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "pid": 28808,
+        "exitCode": 0,
+        "finished": 1793047976.8593228
+      },
+      "javaRuntime": "Zulu 25.0.5",
+      "report": {
+        "status": "complete",
+        "functionalOnly": true,
+        "scope": "Same-client native observation; prepared Cat tails at 6 and 12 seconds. No seek, no client scheduling changes, no current-source restarts. Not a multiplayer login validation.",
+        "java": "25.0.5",
+        "trials": [
+          {
+            "round": 0,
+            "originalPrimedSeconds": 0,
+            "tailPrimedSeconds": 2,
+            "existingSourcesUnchanged": true
+          },
+          {
+            "round": 1,
+            "originalPrimedSeconds": 2,
+            "tailPrimedSeconds": 2,
+            "existingSourcesUnchanged": true
+          },
+          {
+            "round": 2,
+            "originalPrimedSeconds": 2,
+            "tailPrimedSeconds": 2,
+            "existingSourcesUnchanged": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "tails-four-processors-01",
+      "launch": {
+        "mode": "tails",
+        "started": 1793047996.726406,
+        "status": "complete",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G",
+          "-XX:ActiveProcessorCount=4"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "pid": 9416,
+        "exitCode": 0,
+        "finished": 1793048077.738917
+      },
+      "javaRuntime": "Zulu 25.0.5",
+      "report": {
+        "status": "complete",
+        "functionalOnly": false,
+        "scope": "Same-client native observation; prepared Cat tails at 6 and 12 seconds. No seek, no client scheduling changes, no current-source restarts. Not a multiplayer login validation.",
+        "java": "25.0.5",
+        "availableProcessors": 4,
+        "trials": [
+          {
+            "round": 0,
+            "originalPrimedSeconds": 0,
+            "tailPrimedSeconds": 2,
+            "beforeJoining": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 18.4020089019983,
+                "offset": 2.6799910980017008
+              }
+            ],
+            "afterFirstJoin": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 18.40202019557823,
+                "offset": 6.079979804421769
+              },
+              {
+                "sound": "tail_probe:cat_06",
+                "source": 3,
+                "buffer": 2,
+                "start": 24.04200146152211,
+                "offset": 0.43999853847789117
+              }
+            ],
+            "firstJoinErrorMs": -360.01873405612275,
+            "afterSecondJoin": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 18.402040092208757,
+                "offset": 12.069959907791242
+              },
+              {
+                "sound": "tail_probe:cat_06",
+                "source": 3,
+                "buffer": 2,
+                "start": 24.04202135815264,
+                "offset": 6.429978641847364
+              },
+              {
+                "sound": "tail_probe:cat_12",
+                "source": 4,
+                "buffer": 3,
+                "start": 30.03200146152211,
+                "offset": 0.43999853847789117
+              }
+            ],
+            "secondJoinErrorMs": -370.038630686647,
+            "existingSourcesUnchanged": true
+          },
+          {
+            "round": 1,
+            "originalPrimedSeconds": 2,
+            "tailPrimedSeconds": 2,
+            "beforeJoining": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 33.03201009778912,
+                "offset": 3.0399899022108845
+              }
+            ],
+            "afterFirstJoin": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 33.03202142458546,
+                "offset": 6.449978575414541
+              },
+              {
+                "sound": "tail_probe:cat_06",
+                "source": 3,
+                "buffer": 2,
+                "start": 39.03200149473852,
+                "offset": 0.4499985052614796
+              }
+            ],
+            "firstJoinErrorMs": -0.01992984693544031,
+            "afterSecondJoin": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 33.032041321215985,
+                "offset": 12.439958678784013
+              },
+              {
+                "sound": "tail_probe:cat_06",
+                "source": 3,
+                "buffer": 2,
+                "start": 39.03202139136905,
+                "offset": 6.439978608630953
+              },
+              {
+                "sound": "tail_probe:cat_12",
+                "source": 4,
+                "buffer": 3,
+                "start": 45.03200146152211,
+                "offset": 0.43999853847789117
+              }
+            ],
+            "secondJoinErrorMs": -0.03985969387798605,
+            "existingSourcesUnchanged": true
+          },
+          {
+            "round": 2,
+            "originalPrimedSeconds": 2,
+            "tailPrimedSeconds": 2,
+            "beforeJoining": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 48.03201009778912,
+                "offset": 3.0399899022108845
+              }
+            ],
+            "afterFirstJoin": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 48.03202139136905,
+                "offset": 6.439978608630953
+              },
+              {
+                "sound": "tail_probe:cat_06",
+                "source": 3,
+                "buffer": 2,
+                "start": 54.03200146152211,
+                "offset": 0.43999853847789117
+              }
+            ],
+            "firstJoinErrorMs": -0.019929846942545737,
+            "afterSecondJoin": [
+              {
+                "sound": "copper_speakers:buffered.cat",
+                "source": 1,
+                "buffer": 1,
+                "start": 48.0320413876488,
+                "offset": 12.45995861235119
+              },
+              {
+                "sound": "tail_probe:cat_06",
+                "source": 3,
+                "buffer": 2,
+                "start": 54.03202145780187,
+                "offset": 6.4599785421981295
+              },
+              {
+                "sound": "tail_probe:cat_12",
+                "source": 4,
+                "buffer": 3,
+                "start": 60.0520014615221,
+                "offset": 0.43999853847789117
+              }
+            ],
+            "secondJoinErrorMs": 19.960073873299677,
+            "existingSourcesUnchanged": true
+          }
+        ]
+      }
+    }
+  ],
+  "storageProjection": {
+    "scope": "Projection only, not a generated pack: each tail is assumed to have the source average compressed bitrate. Excludes originals, zip overhead, re-encoding and custom songs.",
+    "songs": [
+      {
+        "asset": "minecraft/sounds/records/11.ogg",
+        "sha1": "b406e1c10c0cf34fd943dddd2cea5106dab53ee9",
+        "sourceBytes": 604751,
+        "durationSeconds": 71.11102,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 10450839,
+          "5": 4001745,
+          "10": 1852047
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/13.ogg",
+        "sha1": "b0ed9fc4ce57b96c05c956b92fe077e8d7c448a6",
+        "sourceBytes": 1094260,
+        "durationSeconds": 178.085261,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 48171015,
+          "5": 18943658,
+          "10": 9201205
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/5.ogg",
+        "sha1": "584ac8cfca1f68b5e1eb6d0c3554dd52f31bbec5",
+        "sourceBytes": 1599985,
+        "durationSeconds": 178.239208,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 70495968,
+          "5": 27723133,
+          "10": 13465522
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/blocks.ogg",
+        "sha1": "cde65556718d191e30d48fd625bad1381f1fcd06",
+        "sourceBytes": 2579678,
+        "durationSeconds": 345.913311,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 221796710,
+          "5": 87947440,
+          "10": 43336420
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/bounce.ogg",
+        "sha1": "e107e8f61f480575f3e8c18ffb3d42bf0f0ed7e5",
+        "sourceBytes": 1981684,
+        "durationSeconds": 234.626875,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 115250057,
+          "5": 45506249,
+          "10": 22267473
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/cat.ogg",
+        "sha1": "d4313530b3100f824e2f0b2adeed165b0b816267",
+        "sourceBytes": 1400008,
+        "durationSeconds": 185.342812,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 64172017,
+          "5": 25249344,
+          "10": 12283465
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/chirp.ogg",
+        "sha1": "8bd9484e2bc85bfa2c1c4c6dd84d102c9a7f86c0",
+        "sourceBytes": 1370338,
+        "durationSeconds": 185.583243,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 62893992,
+          "5": 24747910,
+          "10": 12039524
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/creator.ogg",
+        "sha1": "1b62b6e66e47b1cf034ec3ac54bb7c6baff74780",
+        "sourceBytes": 1641114,
+        "durationSeconds": 176.388979,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 71549506,
+          "5": 28131552,
+          "10": 13663897
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/creator_music_box.ogg",
+        "sha1": "e1b4726cf75e5d6db25fc22204ceb83279f69498",
+        "sourceBytes": 603797,
+        "durationSeconds": 73.069229,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 10729903,
+          "5": 4114896,
+          "10": 1912840
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/far.ogg",
+        "sha1": "28912fd79cfe0e4e9465503809465ec400b0926b",
+        "sourceBytes": 1298177,
+        "durationSeconds": 174.461542,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 55972723,
+          "5": 22000895,
+          "10": 10684203
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/lava_chicken.ogg",
+        "sha1": "3fad13f1e9f4fa6eedcab98ca691c6c112087b07",
+        "sourceBytes": 1395430,
+        "durationSeconds": 134.522292,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 46233397,
+          "5": 18076170,
+          "10": 8700955
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/mall.ogg",
+        "sha1": "62ef4f7c2da1d0ebf50c9462c9bfe7b27e865b0f",
+        "sourceBytes": 1455561,
+        "durationSeconds": 197.218322,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 71039801,
+          "5": 27983104,
+          "10": 13632794
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/mellohi.ogg",
+        "sha1": "1f86ddd8bc02fb96c27583c0b38ebd0dcdaf271a",
+        "sourceBytes": 693015,
+        "durationSeconds": 96.198367,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 16320864,
+          "5": 6323466,
+          "10": 2995326
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/otherside.ogg",
+        "sha1": "60f3cb6da0dedefb50015b883c98e32357134231",
+        "sourceBytes": 1821594,
+        "durationSeconds": 195.652167,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 88190244,
+          "5": 34731724,
+          "10": 16920584
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/pigstep.ogg",
+        "sha1": "12174a8a8332a4156d57d57f370932ad28789df0",
+        "sourceBytes": 1457471,
+        "durationSeconds": 148.235313,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 53284453,
+          "5": 20881745,
+          "10": 10080842
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/precipice.ogg",
+        "sha1": "043067183af1d374857b0210fc281535fcf64665",
+        "sourceBytes": 2940492,
+        "durationSeconds": 299.313292,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 218564054,
+          "5": 86545498,
+          "10": 42539313
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/relic.ogg",
+        "sha1": "180d3c12b20c806ad7da82a77c32238547f68214",
+        "sourceBytes": 1970078,
+        "durationSeconds": 218.966583,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 106862520,
+          "5": 42156774,
+          "10": 20588192
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/stal.ogg",
+        "sha1": "d826bdcc7a5cf8a276d9dec67c71775c55d1f924",
+        "sourceBytes": 1196722,
+        "durationSeconds": 150.857143,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 44537097,
+          "5": 17457862,
+          "10": 8431450
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/strad.ogg",
+        "sha1": "8d5b13c57c0689a009a5857219a2700009495afe",
+        "sourceBytes": 1576397,
+        "durationSeconds": 188.167483,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 73369108,
+          "5": 28879330,
+          "10": 14049404
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/tears.ogg",
+        "sha1": "fcfacc37f008476785db7bd0b95d1e00836697c0",
+        "sourceBytes": 1598285,
+        "durationSeconds": 175.122396,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 69176980,
+          "5": 27190952,
+          "10": 13207034
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/wait.ogg",
+        "sha1": "aa57d2ca2d029c3b042adac9e66838d981145606",
+        "sourceBytes": 1921491,
+        "durationSeconds": 237.885125,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 113313223,
+          "5": 44753596,
+          "10": 21900696
+        }
+      },
+      {
+        "asset": "minecraft/sounds/records/ward.ogg",
+        "sha1": "7b2c4354cb259a4ed7bf7dcf317012aa54bceb06",
+        "sourceBytes": 2103583,
+        "durationSeconds": 251.392562,
+        "projectedTailBytesByIntervalSeconds": {
+          "2": 131156258,
+          "5": 51834924,
+          "10": 25394479
+        }
+      }
+    ],
+    "sourceBytes": 34303911,
+    "projectedTailBytesByIntervalSeconds": {
+      "2": 1763530729,
+      "5": 695181967,
+      "10": 339147665
+    }
+  }
+}

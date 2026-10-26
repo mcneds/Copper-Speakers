@@ -91,5 +91,6 @@ tasks.configureEach {
     }
 }
 
-// Disposable section-playback feasibility assets, generated locally.
+// Disposable playback feasibility assets, generated locally; never in the release jar.
 sourceSets.gametest.resources.srcDir("build/generated/section-probe")
+sourceSets.gametest.resources.srcDir("build/generated/tail-probe")

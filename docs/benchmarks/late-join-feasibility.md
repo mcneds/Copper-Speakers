@@ -27,7 +27,7 @@ The existing full-track path starts one continuous sound per voice. Replacing th
 
 Keeping existing listeners on their original whole-track sound introduces another problem: the server cannot observe when each vanilla client actually finished decoding and started playing. In 26.3, `SoundEngine.loadLibrary()` launches audio preloading asynchronously and does not wait for its future, so resource-pack acceptance is not an acknowledgement that audio buffers are ready. The current mod's 0.1.9 benchmarks measure source alignment within one client; they do not establish a shared playhead across different clients.
 
-Client-side playback support can supply the missing seek operation and timing feedback, allowing a newcomer to join a shared timeline while existing channels continue. That changes the installation requirement for participating players and is a separate design decision. This experimental branch leaves all production gameplay and playback code unchanged.
+The project requires unmodified clients: a client mod is outside the accepted design. The [prepared-tail investigation](late-join-tails.md) explores sending only the newcomer a continuous cropped track while existing channels keep playing. This experimental branch leaves all production gameplay and playback code unchanged.
 
 ## Reproduction
 

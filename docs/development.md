@@ -47,11 +47,11 @@ The generic custom-disc test uses a streamed song in an unrelated namespace, wit
 
 The late-join test checks native source continuity and shared buffers. Distance, wire, plate and note tests cover loaded-network range and client visuals. All observation helpers and synthetic audio live in `src/gametest` and are excluded from the distributable.
 
-`--diagnostic` limits JIT compilation and processor count to work around a documented native JVM startup problem on the development machine. Use diagnostic runs for functionality only; they are rejected for the `smoke` timing mode. Never count failed or incomplete launches as passing tests.
+`--diagnostic` limits JIT compilation and processor count to work around a documented native JVM startup problem on the development machine. Use diagnostic runs for functionality only; they are rejected for the `smoke` and `sections` timing modes. In `tails` mode, diagnostic runs omit all timing observations and report only continuity assertions. Never count failed or incomplete launches as passing tests.
 
 ## Audio benchmarks
 
-The experimental [late-listener section probe](benchmarks/late-join-feasibility.md) measures boundary timing. It is not a production late-joining implementation.
+The experimental [late-listener section probe](benchmarks/late-join-feasibility.md) measures boundary timing. The [prepared-tail probe](benchmarks/late-join-tails.md) investigates continuous cropped tracks for arriving listeners. Neither is a production late-joining implementation.
 
 ```powershell
 ./gradlew.bat build prepareRuns
