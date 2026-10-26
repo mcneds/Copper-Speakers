@@ -1,0 +1,92 @@
+plugins { id 'net.fabricmc.fabric-loom' version '1.16.3' }
+group = 'dev.mcneds'
+version = '0.1.9'
+base { archivesName = 'copper-speakers' }
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.nucleoid.xyz' }
+    maven { url = 'https://api.modrinth.com/maven' }
+}
+dependencies {
+    minecraft 'com.mojang:minecraft:26.3'
+    implementation 'net.fabricmc:fabric-loader:0.19.5'
+    implementation 'net.fabricmc.fabric-api:fabric-api:0.163.0+26.3'
+    implementation 'eu.pb4:polymer-core:0.18.4+26.3'
+    implementation 'eu.pb4:polymer-blocks:0.18.4+26.3'
+    implementation 'eu.pb4:polymer-resource-pack:0.18.4+26.3'
+    implementation 'eu.pb4:polymer-virtual-entity:0.18.4+26.3'
+    runtimeOnly 'maven.modrinth:polymer:G0fTdl8M'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+java { toolchain { languageVersion = JavaLanguageVersion.of(25) }; withSourcesJar() }
+tasks.named('jar') { from('LICENSE') }
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'copper_speakers_tests'
+        enableGameTests = true
+        enableClientGameTests = true
+        eula = true
+    }
+}
+configurations { clientPerformance }
+dependencies {
+    clientPerformance 'maven.modrinth:sodium:bAZQdGpg'
+    clientPerformance 'maven.modrinth:lithium:xS0Q8LSi'
+}
+loom {
+    runs {
+        client { runDir 'run/client'; ideConfigGenerated true }
+        server { runDir 'run/server'; ideConfigGenerated true; programArg 'nogui' }
+    }
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }
+tasks.withType(Test).configureEach { useJUnitPlatform() }
+processResources { inputs.property 'version', project.version; filesMatching('fabric.mod.json') { expand version: project.version } }
+tasks.withType(JavaExec).configureEach {
+    if (name.toLowerCase().contains('client') && providers.gradleProperty('performanceMods').isPresent()) classpath += configurations.clientPerformance
+    if (providers.gradleProperty('runtimeJava').isPresent()) executable = providers.gradleProperty('runtimeJava').get()
+}
+tasks.register('prepareRuns') {
+    dependsOn 'classes', 'gametestClasses', 'configureClientLaunch'
+    doLast {
+        ['runClient', 'runServer', 'runClientGameTest', 'runGameTest'].each { taskName ->
+            def launch = tasks.named(taskName).get()
+            def quote = { Object value -> '"' + value.toString().replace('\\', '/').replace('"', '\\"') + '"' }
+            def vm = new ArrayList(launch.allJvmArgs.findAll { !it.toString().startsWith('@') })
+            vm.addAll(['-classpath', launch.classpath.asPath, launch.mainClass.get()])
+            vm.addAll(launch.args)
+            file("build/${taskName}.args").text = vm.collect(quote).join('\n') + '\n'
+            file("build/${taskName}-vm.args").text = vm.take(vm.indexOf(launch.mainClass.get())).collect(quote).join('\n') + '\n'
+        }
+        def vanilla = tasks.named('runClient').get()
+        def paths = vanilla.classpath.files.findAll {
+            it.name.endsWith('.jar') && !it.path.contains('net.fabricmc') && !it.path.contains('eu.pb4') &&
+                !it.path.contains('maven.modrinth') && !it.path.contains('mixinextras') && !it.path.contains('org.ow2.asm') &&
+                !it.name.startsWith('minecraft-')
+        }
+        // Loom's development Minecraft jar has injected interfaces. Use the untouched publisher client.
+        paths.add(new File(gradle.gradleUserHomeDir, 'caches/fabric-loom/26.3/minecraft-client.jar'))
+        def q = { Object v -> '"' + v.toString().replace('\\', '/') + '"' }
+        file('build/vanilla.args').text = ['--enable-native-access=ALL-UNNAMED', '--sun-misc-unsafe-memory-access=allow',
+            '-Xmx2G', '-classpath', paths.collect { it.path }.join(File.pathSeparator),
+            'net.minecraft.client.main.Main', '--version', '26.3', '--assetIndex', '26.3-34',
+            '--assetsDir', new File(gradle.gradleUserHomeDir, 'caches/fabric-loom/assets').path,
+            '--accessToken', '0', '--username', 'CopperTester', '--uuid', 'f04f0868-3675-3b7e-bbd9-036eb4f71333',
+            '--userType', 'msa', '--width', '1000', '--height', '700',
+            '--quickPlayMultiplayer', '127.0.0.1:28901'].collect(q).join('\n') + '\n'
+        file('build/release-jar.txt').text = tasks.named('jar').get().archiveFile.get().asFile.absolutePath + '\n'
+    }
+}
+// The launch script holds a PID marker for the complete runtime. No active classes/resources may be overwritten.
+tasks.configureEach {
+    if (!(it instanceof JavaCompile) && !(it instanceof ProcessResources) && name != 'clean') return
+    doFirst {
+        fileTree('build/runtime-locks').matching { include '*.json' }.each { marker ->
+            def pid = new groovy.json.JsonSlurper().parse(marker).pid as long
+            if (ProcessHandle.of(pid).map { it.isAlive() }.orElse(false))
+                throw new GradleException('A development runtime is active. Stop it before rebuilding.')
+        }
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "block.copper_speakers.copper_wire": "Copper Wire",
+  "block.copper_speakers.speaker": "Speaker",
+  "item.copper_speakers.wall_plate": "Wall Plate",
+  "entity.copper_speakers.wall_plate": "Wall Plate",
+  "message.copper_speakers.drain_before_stripping": "Drain the water before stripping this wire."
+}

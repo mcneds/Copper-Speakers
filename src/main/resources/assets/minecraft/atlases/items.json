@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "minecraft:particle/note",
+      "sprite": "copper_speakers:item/speaker_note"
+    }
+  ]
+}

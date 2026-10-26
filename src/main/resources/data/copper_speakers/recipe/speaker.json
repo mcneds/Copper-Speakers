@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " P ",
+    "CNC",
+    " C "
+  ],
+  "key": {
+    "P": "minecraft:paper",
+    "C": "minecraft:copper_ingot",
+    "N": "minecraft:note_block"
+  },
+  "result": {
+    "id": "copper_speakers:speaker",
+    "count": 1
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "comparator_output": 11,
+  "description": {
+    "translate": "jukebox_song.minecraft.11"
+  },
+  "length_in_seconds": 71.0,
+  "sound_event": {
+    "sound_id": "copper_speakers:buffered.11"
+  }
+}

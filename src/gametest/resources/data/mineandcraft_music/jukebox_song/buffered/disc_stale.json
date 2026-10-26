@@ -1,0 +1,10 @@
+{
+  "sound_event": {
+    "sound_id": "mineandcraft_music:buffered.disc_stale"
+  },
+  "description": {
+    "text": "Synthetic fixture - Speaker test tone"
+  },
+  "length_in_seconds": 61.0,
+  "comparator_output": 1
+}

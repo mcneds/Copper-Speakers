@@ -1,0 +1,20 @@
+{
+  "disc_a1111111111141118111111111111111": {
+    "sounds": [
+      {
+        "name": "mineandcraft_music:music/disc_a1111111111141118111111111111111",
+        "stream": true
+      }
+    ]
+  },
+  "buffered.disc_a1111111111141118111111111111111": {
+    "sounds": [
+      {
+        "name": "mineandcraft_music:music/disc_a1111111111141118111111111111111",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  }
+}

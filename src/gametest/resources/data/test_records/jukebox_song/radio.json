@@ -1,0 +1,6 @@
+{
+  "sound_event": {"sound_id": "test_records:station"},
+  "description": {"text": "Synthetic streamed custom disc without a buffered alias"},
+  "length_in_seconds": 60.0,
+  "comparator_output": 9
+}

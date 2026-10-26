@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "copper_speakers:item/speaker_note",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -16733012
+      }
+    ]
+  }
+}

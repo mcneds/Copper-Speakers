@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1, "id": "copper_speakers_tests", "version": "1.0.0",
+  "name": "Copper Speakers development tests", "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": ["dev.mcneds.copperspeakers.test.CopperGameTests", "dev.mcneds.copperspeakers.test.WallPlateGameTests", "dev.mcneds.copperspeakers.test.WireStepGameTests", "dev.mcneds.copperspeakers.test.CustomDiscGameTests"],
+    "fabric-client-gametest": ["dev.mcneds.copperspeakers.test.AudioSmokeTest"]
+  }
+}

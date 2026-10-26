@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Copper Speakers - Server Tests" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="net.fabricmc.devlaunchinjector.Main" />
+    <module name="ServerSoundSync.gametest" />
+    <option name="VM_PARAMETERS" value="@&quot;$PROJECT_DIR$/build/runGameTest-vm.args&quot; -XX:TieredStopAtLevel=1 -XX:ActiveProcessorCount=4" />
+    <option name="PROGRAM_PARAMETERS" value="nogui" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/build/run/gameTest" />
+    <option name="ALTERNATIVE_JRE_PATH" value="$PROJECT_DIR$/.runtime/zulu25.38.107-ca-jre25.0.5-win_x64" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <method v="2" />
+  </configuration>
+</component>

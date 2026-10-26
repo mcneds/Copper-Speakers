@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": "fixed",
+        "model": {
+          "type": "minecraft:model",
+          "model": "copper_speakers:item/wall_plate_face"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "copper_speakers:item/wall_plate"
+    }
+  }
+}

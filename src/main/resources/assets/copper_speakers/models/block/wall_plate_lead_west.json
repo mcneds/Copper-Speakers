@@ -1,0 +1,41 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "cable": "minecraft:block/copper_block",
+    "particle": "#cable"
+  },
+  "elements": [
+    {
+      "from": [
+        13.5,
+        0,
+        7
+      ],
+      "to": [
+        16.125,
+        8,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cable"
+        },
+        "east": {
+          "texture": "#cable"
+        },
+        "south": {
+          "texture": "#cable"
+        },
+        "west": {
+          "texture": "#cable"
+        },
+        "up": {
+          "texture": "#cable"
+        },
+        "down": {
+          "texture": "#cable"
+        }
+      }
+    }
+  ]
+}

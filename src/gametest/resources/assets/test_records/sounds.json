@@ -1,0 +1,5 @@
+{
+  "evening": {"sounds": [{"name": "mineandcraft_music:music/disc_a1111111111141118111111111111111", "stream": true}]},
+  "buffered.evening": {"sounds": [{"name": "mineandcraft_music:music/disc_a1111111111141118111111111111111", "type": "file", "stream": false, "preload": false}]},
+  "station": {"sounds": [{"name": "mineandcraft_music:music/disc_a1111111111141118111111111111111", "stream": true}]}
+}

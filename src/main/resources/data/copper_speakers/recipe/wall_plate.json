@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "C C",
+    "CWC",
+    "C C"
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "W": "copper_speakers:copper_wire"
+  },
+  "result": {
+    "id": "copper_speakers:wall_plate",
+    "count": 2
+  }
+}

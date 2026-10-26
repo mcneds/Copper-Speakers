@@ -1,0 +1,222 @@
+{
+  "buffered.11": {
+    "sounds": [
+      {
+        "name": "minecraft:records/11",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.13": {
+    "sounds": [
+      {
+        "name": "minecraft:records/13",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.5": {
+    "sounds": [
+      {
+        "name": "minecraft:records/5",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.blocks": {
+    "sounds": [
+      {
+        "name": "minecraft:records/blocks",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.bounce": {
+    "sounds": [
+      {
+        "name": "minecraft:records/bounce",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.cat": {
+    "sounds": [
+      {
+        "name": "minecraft:records/cat",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.chirp": {
+    "sounds": [
+      {
+        "name": "minecraft:records/chirp",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.creator": {
+    "sounds": [
+      {
+        "name": "minecraft:records/creator",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.creator_music_box": {
+    "sounds": [
+      {
+        "name": "minecraft:records/creator_music_box",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.far": {
+    "sounds": [
+      {
+        "name": "minecraft:records/far",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.lava_chicken": {
+    "sounds": [
+      {
+        "name": "minecraft:records/lava_chicken",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.mall": {
+    "sounds": [
+      {
+        "name": "minecraft:records/mall",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.mellohi": {
+    "sounds": [
+      {
+        "name": "minecraft:records/mellohi",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.otherside": {
+    "sounds": [
+      {
+        "name": "minecraft:records/otherside",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.pigstep": {
+    "sounds": [
+      {
+        "name": "minecraft:records/pigstep",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.precipice": {
+    "sounds": [
+      {
+        "name": "minecraft:records/precipice",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.relic": {
+    "sounds": [
+      {
+        "name": "minecraft:records/relic",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.stal": {
+    "sounds": [
+      {
+        "name": "minecraft:records/stal",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.strad": {
+    "sounds": [
+      {
+        "name": "minecraft:records/strad",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.tears": {
+    "sounds": [
+      {
+        "name": "minecraft:records/tears",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.wait": {
+    "sounds": [
+      {
+        "name": "minecraft:records/wait",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  },
+  "buffered.ward": {
+    "sounds": [
+      {
+        "name": "minecraft:records/ward",
+        "type": "file",
+        "stream": false,
+        "preload": false
+      }
+    ]
+  }
+}
