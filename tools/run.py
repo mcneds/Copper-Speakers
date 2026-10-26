@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def prepare(mode):
     work = ROOT / "run" / mode
     work.mkdir(parents=True, exist_ok=True)
-    if mode in ("server", "smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes"):
+    if mode in ("server", "smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes", "sections"):
         (work / "eula.txt").write_text("eula=true\n")
     if mode == "server" and not (work / "server.properties").exists():
         (work / "server.properties").write_text(
@@ -23,7 +23,7 @@ def prepare(mode):
             "enable-rcon=true\nrcon.port=28902\nrcon.password=copper-local-development\nwhite-list=false\n"
             "gamemode=creative\nforce-gamemode=true\nspawn-protection=0\nview-distance=6\nsimulation-distance=6\n"
             "level-seed=1\nmotd=Copper Speakers isolated development\n")
-    if mode in ("smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes"):
+    if mode in ("smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes", "sections"):
         config = work / "config/polymer/auto-host.json"
         config.parent.mkdir(parents=True, exist_ok=True)
         # Audio observation uses local test assets. Vanilla pack acceptance is tested separately.
@@ -46,7 +46,7 @@ def prepare(mode):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["client","server","smoke","custom","generic","distance","late","wire","plate","notes","vanilla"])
+    parser.add_argument("mode", choices=["client","server","smoke","custom","generic","distance","late","wire","plate","notes","sections","vanilla"])
     parser.add_argument("--name", required=True, help="New attempt name; existing reports are never overwritten")
     parser.add_argument("--java", type=Path)
     parser.add_argument("--heap", help="Explicit maximum heap, e.g. 2G")
@@ -55,7 +55,7 @@ def main():
     args = parser.parse_args()
     if args.heap and not re.fullmatch(r"[1-9][0-9]*[MG]", args.heap):
         parser.error("Heap must be a positive size such as 2G or 1024M")
-    if args.diagnostic and args.mode == "smoke":
+    if args.diagnostic and args.mode in ("smoke", "sections"):
         parser.error("Diagnostic launches must stay separate from timing measurements")
     if args.packaged and args.mode != "server":
         parser.error("--packaged applies only to the dedicated server")
@@ -63,7 +63,7 @@ def main():
         parser.error("Use letters, digits, hyphens and underscores for the attempt name")
     result = ROOT / "build/validation" / args.name
     result.mkdir(parents=True, exist_ok=False)
-    argname = {"client":"runClient", "server":"runServer", "smoke":"runClientGameTest", "custom":"runClientGameTest", "generic":"runClientGameTest", "distance":"runClientGameTest", "late":"runClientGameTest", "wire":"runClientGameTest", "plate":"runClientGameTest", "notes":"runClientGameTest", "vanilla":"vanilla"}[args.mode]
+    argname = {"client":"runClient", "server":"runServer", "smoke":"runClientGameTest", "custom":"runClientGameTest", "generic":"runClientGameTest", "distance":"runClientGameTest", "late":"runClientGameTest", "wire":"runClientGameTest", "plate":"runClientGameTest", "notes":"runClientGameTest", "sections":"runClientGameTest", "vanilla":"vanilla"}[args.mode]
     argfile = ROOT / "build" / (argname + ".args")
     if not argfile.exists():
         parser.error("Run gradlew prepareRuns first, with all clients stopped")
@@ -92,7 +92,7 @@ def main():
     lock.write_text(json.dumps({"pid":os.getpid(), "mode":args.mode, "attempt":args.name}))
     env = os.environ.copy()
     env["COPPER_SMOKE_OUTPUT"] = str(result / "audio.json")
-    if args.mode in ("custom", "generic", "distance", "late", "wire", "plate", "notes"):
+    if args.mode in ("custom", "generic", "distance", "late", "wire", "plate", "notes", "sections"):
         env["COPPER_CLIENT_TEST"] = args.mode
         env["COPPER_" + args.mode.upper() + "_OUTPUT"] = str(result / (args.mode + ".json"))
     else:
@@ -121,7 +121,7 @@ def main():
                 status["status"] = "invalid-measurement" if args.mode == "smoke" else "failed-launch-or-test"
             else:
                 status["status"] = "complete"
-        elif args.mode in ("generic", "distance", "late", "wire", "plate", "notes"):
+        elif args.mode in ("generic", "distance", "late", "wire", "plate", "notes", "sections"):
             report = result / (args.mode + ".json")
             status["status"] = "complete" if code == 0 and report.exists() and json.loads(report.read_text())["status"] == "complete" else "failed-launch-or-test"
         (result / "launch.json").write_text(json.dumps(status, indent=2))

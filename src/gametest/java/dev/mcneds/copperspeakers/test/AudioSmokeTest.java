@@ -48,6 +48,10 @@ public final class AudioSmokeTest implements FabricClientGameTest {
     private Identifier songId() { return custom ? CustomDiscGameTests.SONG : Identifier.withDefaultNamespace("cat"); }
     private Identifier soundId() { return custom ? CustomDiscGameTests.SOUND : CopperSpeakers.id("buffered.cat"); }
     @Override public void runTest(ClientGameTestContext context) {
+        if ("sections".equals(System.getenv("COPPER_CLIENT_TEST"))) {
+            new SectionPlaybackTest().runTest(context);
+            return;
+        }
         if ("generic".equals(System.getenv("COPPER_CLIENT_TEST"))) {
             new LateJoinTest(true).runTest(context);
             return;

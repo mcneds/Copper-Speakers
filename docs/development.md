@@ -51,6 +51,8 @@ The late-join test checks native source continuity and shared buffers. Distance,
 
 ## Audio benchmarks
 
+The experimental [late-listener section probe](benchmarks/late-join-feasibility.md) measures boundary timing. It is not a production late-joining implementation.
+
 ```powershell
 ./gradlew.bat build prepareRuns
 python tools/benchmark.py --name my-benchmark --rounds 10 --sources 3 8 16 --sample-ticks 40

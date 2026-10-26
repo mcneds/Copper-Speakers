@@ -90,3 +90,6 @@ tasks.configureEach {
         }
     }
 }
+
+// Disposable section-playback feasibility assets, generated locally.
+sourceSets.gametest.resources.srcDir("build/generated/section-probe")

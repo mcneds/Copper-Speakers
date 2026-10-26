@@ -1,0 +1,1086 @@
+{
+  "productionVersion": "0.1.9",
+  "productionCommit": "2d6146c11b98acf6eda022f38199edc3fa5ff22b",
+  "date": "2026-10-26",
+  "decision": "Do not ship as a seamless late-listener fix. The probe shows gaps and overlaps between native sections.",
+  "attempts": [
+    {
+      "name": "sections-native-01",
+      "scheduler": "Client-clock-driven test harness",
+      "included": true,
+      "launch": {
+        "mode": "sections",
+        "started": 1793045824.7728157,
+        "status": "complete",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "exitCode": 0,
+        "finished": 1793045913.102078
+      },
+      "measurement": {
+        "status": "complete",
+        "scope": "Unchanged vanilla audio engine; two-second sections through server sound packets. Native clock observation, not acoustic capture.",
+        "java": "25.0.5",
+        "trials": [
+          {
+            "pass": 0,
+            "part": 0,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 3,
+                "start": 17.04200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 1,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 4,
+                "start": 19.04200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 2,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 5,
+                "start": 21.052000597895407,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 9.999966783588832,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 3,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 6,
+                "start": 23.052000597895407,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 4,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 7,
+                "start": 25.052000597895407,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 5,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 8,
+                "start": 27.052000597895407,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 6,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 9,
+                "start": 29.052000597895407,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 3,
+                "buffer": 9,
+                "start": 29.052000597895407,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 7,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 10,
+                "start": 31.102000564678995,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 2,
+                "buffer": 10,
+                "start": 31.102000564678995,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 49.99996678358798,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 8,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 11,
+                "start": 33.092000631111816,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 11,
+                "start": 33.092000631111816,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -9.999933567179653,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 9,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 12,
+                "start": 35.05200059789541,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 2,
+                "buffer": 12,
+                "start": 35.05200059789541,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -40.000033216408326,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 10,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 13,
+                "start": 37.05200059789541,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 13,
+                "start": 37.05200059789541,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 11,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 14,
+                "start": 39.05200059789541,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 2,
+                "buffer": 14,
+                "start": 39.05200059789541,
+                "offset": 0.17999940210459184,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 0,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 3,
+                "start": 41.44200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 1,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 4,
+                "start": 43.44200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 2,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 5,
+                "start": 45.44200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 3,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 6,
+                "start": 47.482000631111816,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 39.99999999999915,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 4,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 7,
+                "start": 49.482000631111816,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 5,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 8,
+                "start": 51.49200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 10.000000000005116,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 6,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 9,
+                "start": 53.49200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 9,
+                "start": 53.49200063111182,
+                "offset": 0.18999936888818028,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 7,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 10,
+                "start": 55.462000564678995,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 5,
+                "buffer": 10,
+                "start": 55.462000564678995,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -30.0000664328266,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 8,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 11,
+                "start": 57.472000564679,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 11,
+                "start": 57.472000564679,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 10.000000000005116,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 9,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 12,
+                "start": 59.48200053146259,
+                "offset": 0.15999946853741498,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 5,
+                "buffer": 12,
+                "start": 59.48200053146259,
+                "offset": 0.15999946853741498,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 9.999966783588832,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 10,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 13,
+                "start": 61.482000564679,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 13,
+                "start": 61.482000564679,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 3.321640917874902e-05,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 11,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 14,
+                "start": 63.482000564679,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 5,
+                "buffer": 14,
+                "start": 63.482000564679,
+                "offset": 0.1699994353210034,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          }
+        ]
+      },
+      "originalReportSha256": "1ef7f3ef42afb4aa7b79eaa66aca98fa0488d0f56127c28c9b107fa9f91c1ada"
+    },
+    {
+      "name": "sections-native-02",
+      "scheduler": "Every 40 server ticks",
+      "included": false,
+      "launch": {
+        "mode": "sections",
+        "started": 1793046041.3596854,
+        "status": "failed-launch-or-test",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "exitCode": 3221225477,
+        "finished": 1793046075.9168904
+      }
+    },
+    {
+      "name": "sections-native-03",
+      "scheduler": "Every 40 server ticks",
+      "included": true,
+      "launch": {
+        "mode": "sections",
+        "started": 1793046116.9011009,
+        "status": "complete",
+        "diagnosticFlags": [],
+        "argumentFileSha256": "7ca335795184df3fb2b7ba3e505b8b9c15d2476dae43ba0a2e49b9d7d09aef08",
+        "runtimeJvmFlags": [
+          "-Xmx2G"
+        ],
+        "preparedJvmFlags": [],
+        "audioBenchmarkSettings": {},
+        "exitCode": 0,
+        "finished": 1793046205.388623
+      },
+      "measurement": {
+        "status": "complete",
+        "scope": "Unchanged vanilla audio engine; two-second sections through server sound packets. Native clock observation, not acoustic capture.",
+        "java": "25.0.5",
+        "scheduler": "One section every 40 server ticks; observer does not schedule packets",
+        "trials": [
+          {
+            "pass": 0,
+            "part": 0,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 2,
+                "start": 17.46200073076105,
+                "offset": 0.21999926923894558,
+                "seconds": 2.0
+              }
+            ],
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 1,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 3,
+                "start": 19.452000730761053,
+                "offset": 0.21999926923894558,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -9.99999999999801,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 2,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 4,
+                "start": 21.452000730761053,
+                "offset": 0.21999926923894558,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 3,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 5,
+                "start": 23.442000763977468,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -9.999966783585279,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 4,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 6,
+                "start": 25.442000763977468,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 5,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 7,
+                "start": 27.442000763977468,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 6,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 8,
+                "start": 29.442000763977468,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 3,
+                "buffer": 8,
+                "start": 29.442000763977468,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 7,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 9,
+                "start": 31.442000763977468,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 9,
+                "start": 31.442000763977468,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 8,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 10,
+                "start": 33.44200076397746,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 3,
+                "buffer": 10,
+                "start": 33.44200076397746,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -7.105427357601002e-12,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 9,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 11,
+                "start": 35.45200073076105,
+                "offset": 0.21999926923894558,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 11,
+                "start": 35.45200073076105,
+                "offset": 0.21999926923894558,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 9.999966783588832,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 10,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 12,
+                "start": 37.45200073076105,
+                "offset": 0.21999926923894558,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 3,
+                "buffer": 12,
+                "start": 37.45200073076105,
+                "offset": 0.21999926923894558,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 0,
+            "part": 11,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 13,
+                "start": 39.45200069754464,
+                "offset": 0.20999930245535714,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 13,
+                "start": 39.45200069754464,
+                "offset": 0.20999930245535714,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -3.321640917874902e-05,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 0,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 1,
+                "buffer": 2,
+                "start": 41.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 1,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 3,
+                "start": 43.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 2,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 4,
+                "start": 45.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 3,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 5,
+                "start": 47.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 4,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 6,
+                "start": 49.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 5,
+            "joined": false,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 7,
+                "start": 51.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 6,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 3,
+                "buffer": 8,
+                "start": 53.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 4,
+                "buffer": 8,
+                "start": 53.93200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 0.0,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 7,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 9,
+                "start": 55.972000697544644,
+                "offset": 0.20999930245535714,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 3,
+                "buffer": 9,
+                "start": 55.972000697544644,
+                "offset": 0.20999930245535714,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 39.99990035077161,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 8,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 4,
+                "buffer": 10,
+                "start": 57.952000763977466,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 5,
+                "buffer": 10,
+                "start": 57.952000763977466,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": -19.999933567177663,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 9,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 11,
+                "start": 59.952000797193875,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 3,
+                "buffer": 11,
+                "start": 59.952000797193875,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 3.321640917874902e-05,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 10,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 4,
+                "buffer": 12,
+                "start": 61.962000763977464,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 5,
+                "buffer": 12,
+                "start": 61.962000763977464,
+                "offset": 0.22999923602253403,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 9.999966783588832,
+            "joinSpreadMs": 0.0
+          },
+          {
+            "pass": 1,
+            "part": 11,
+            "joined": true,
+            "samples": [
+              {
+                "x": 0.0,
+                "source": 2,
+                "buffer": 13,
+                "start": 63.96200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              },
+              {
+                "x": 4.0,
+                "source": 3,
+                "buffer": 13,
+                "start": 63.96200079719387,
+                "offset": 0.23999920280612244,
+                "seconds": 2.0
+              }
+            ],
+            "boundaryGapMs": 3.321640917874902e-05,
+            "joinSpreadMs": 0.0
+          }
+        ]
+      },
+      "originalReportSha256": "13404a6b1c4b63af74c020eb7a3e60caf6ab377f92d07859e01aa00d367e4d12"
+    }
+  ]
+}
