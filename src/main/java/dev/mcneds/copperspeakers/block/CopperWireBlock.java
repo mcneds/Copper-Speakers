@@ -74,7 +74,7 @@ public final class CopperWireBlock extends Block implements SimpleWaterloggedBlo
             boolean down = loaded && WireConnections.step(level, read, pos, neighbor.below());
             if (up) climbing |= 1 << i;
             state = state.setValue(PORTS[i], loaded && (up || down || isNode(read.apply(neighbor))
-                    || level instanceof ServerLevel server && WallPlates.get(server).isNode(neighbor)));
+                    || level instanceof ServerLevel server && WallPlates.get(server).connects(neighbor, pos)));
         }
         return state.setValue(CLIMBING, climbing);
     }

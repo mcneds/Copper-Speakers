@@ -20,6 +20,14 @@ Players **do not need Copper Speakers, Fabric, or Polymer installed on their cli
 
 Keep Polymer AutoHost enabled and allow its mod-required resource pack setting. Servers behind proxies may need to configure the advertised pack address. After a pack update, reconnect to download the new version.
 
+### Bedrock through Geyser
+
+Bedrock playback is available through the separate **CopperBedrock** compatibility extension and a patched **GeyserDisplayEntity** bridge. Install both extensions, their matching Bedrock resource packs, and the generated block/item mappings on the server. Bedrock players accept the server packs; no client mod is required. Installing the Copper Speakers mod alone does not provide this integration.
+
+The tested setup is Minecraft Java **26.3**, Geyser-Fabric **2.12.1-b1273**, and Bedrock **26.60** (protocol **2225**). Speaker range extension, including custom music, has been confirmed in game on Java and Bedrock. The companion handles buffered audio, prepared joining events, wire and resin geometry, wall-plate entities, and speaker-note particles. It uses Geyser internals, so other Geyser builds or Bedrock protocols need their own checks.
+
+With the compatibility bundle installed, Bedrock functionality has reached parity with Java on the tested server, as confirmed by its operator. The socket-face restriction below applies on both editions. All 45 Minecraft tests and four graph tests pass. See [Bedrock support](compat/bedrock/README.md) for build and installation instructions, pinned dependencies, and verification limits.
+
 ## Build your first system
 
 1. Craft a speaker and some copper wire.
@@ -48,7 +56,7 @@ Collect copper and a note block to unlock the corresponding recipe-book entries.
 
 ### Through walls
 
-Use a wall plate on a full, solid block to fit sockets on its opposite faces. Wire in front of either face connects through the block. A speaker can sit directly against either socket without a wire segment between them; either the speaker or the plate can be placed first. Plate adjoining full blocks to extend the route through thicker walls. The plated block connects to neighboring nodes horizontally at its own height.
+Use a wall plate on a full, solid block to fit sockets on its opposite faces. Only those two socket faces connect to wire or speakers at the same height; cable beside either unsocketed face stays disconnected. A speaker can sit directly against either socket without a wire segment between them; either the speaker or the plate can be placed first. Plate adjoining full blocks to extend the route through thicker walls, with both socket pairs aligned along the connection.
 
 Side clicks select the plate's direction; top or bottom clicks use the player's horizontal facing. Partial blocks, fluids, block entities and speakers cannot host plates. Punch either exposed plate to remove the pair and recover the item in survival.
 
@@ -92,9 +100,9 @@ With a Java 25 JDK:
 ./gradlew.bat build
 ```
 
-The release jar is `build/libs/copper-speakers-0.2.0.jar`. The build runs graph unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
+The release jar is `build/libs/copper-speakers-0.2.1+mineandcraft.1.jar`. The build runs graph unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
 
-See [Development](docs/development.md) for local launches, client checks and asset generation. Java Edition is the tested target; Bedrock playback through Geyser has not been verified.
+See [Development](docs/development.md) for local launches, client checks and asset generation. Bedrock requires the separate compatibility setup described above; the Java client benchmarks below do not measure Bedrock timing.
 
 ## Benchmarks
 

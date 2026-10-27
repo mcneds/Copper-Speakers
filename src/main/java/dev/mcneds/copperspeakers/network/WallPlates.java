@@ -31,6 +31,12 @@ public final class WallPlates {
         var plate = plates.get(pos);
         return plate != null && !plate.isRemoved() && eligible(level, pos);
     }
+    /** Only the two sockets expose horizontal ports on a plated block. */
+    public boolean connects(BlockPos host, BlockPos neighbor) {
+        if (!isNode(host)) return false;
+        var facing = plates.get(host).facing();
+        return neighbor.equals(host.relative(facing)) || neighbor.equals(host.relative(facing.getOpposite()));
+    }
     public void add(WallPlateEntity plate) {
         var previous = plates.putIfAbsent(plate.host(), plate);
         if (previous != null && previous != plate) { plate.discard(); return; }

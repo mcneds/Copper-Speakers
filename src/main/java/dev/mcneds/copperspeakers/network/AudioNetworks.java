@@ -54,10 +54,18 @@ public final class AudioNetworks {
         return unloaded.contains(ChunkPos.pack(pos)) ? Blocks.AIR.defaultBlockState() : LoadedBlocks.state(level, pos);
     }
     public NetworkGraph.Component<BlockPos> component(BlockPos root) {
-        return NetworkGraph.find(root, p -> WireConnections.neighbors(level, this::state, p),
+        return NetworkGraph.find(root, this::connectedNeighbors,
                 p -> CopperWireBlock.isNode(state(p)) || isWallPlate(p),
                 p -> state(p).getBlock() instanceof CopperWireBlock || isWallPlate(p),
                 p -> state(p).getBlock() instanceof SpeakerBlock, MAX_NODES);
+    }
+    private List<BlockPos> connectedNeighbors(BlockPos pos) {
+        var neighbors = WireConnections.neighbors(level, this::state, pos);
+        var plates = WallPlates.get(level);
+        boolean fromPlate = isWallPlate(pos);
+        neighbors.removeIf(next -> fromPlate && !plates.connects(pos, next)
+                || isWallPlate(next) && !plates.connects(next, pos));
+        return neighbors;
     }
     private boolean isWallPlate(BlockPos pos) {
         return !unloaded.contains(ChunkPos.pack(pos)) && LoadedBlocks.available(level, pos) && WallPlates.get(level).isNode(pos);

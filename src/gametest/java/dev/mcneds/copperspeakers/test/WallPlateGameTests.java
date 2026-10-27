@@ -211,9 +211,9 @@ public final class WallPlateGameTests {
         var player = player(h, GameType.CREATIVE, 1);
         check(place(h, player, HOST, Direction.NORTH), "North/south plates are supported");
         check(player.getMainHandItem().getCount() == 1, "Creative placement keeps its item");
-        // The host is a wire junction, not an axis-limited edge.
-        check(AudioNetworks.get(h.getLevel()).component(h.absolutePos(MASTER)).speakers().contains(h.absolutePos(SPEAKER)),
-                "A plated block connects all four horizontal neighbors");
+        check(AudioNetworks.get(h.getLevel()).component(h.absolutePos(MASTER)).speakers().isEmpty(),
+                "North/south sockets must not connect the east/west cable beside the host");
+        h.assertBlockProperty(new BlockPos(3, 2, 5), CopperWireBlock.PORTS[1], false);
         plate(h).breakPlate(player, Direction.SOUTH);
         check(plate(h) == null && drops(h) == 0, "Creative removal drops nothing");
         h.succeed();
