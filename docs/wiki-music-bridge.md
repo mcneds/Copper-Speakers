@@ -94,7 +94,7 @@ States are `preparing`, `ready`, `failed`, `disabled`, `deletion_pending`, and `
 
 ## Bedrock
 
-The accompanying Geyser extension change is in the wiki checkout at `server/bedrock-speakers/`. Its existing audio coordination, voxel and plate fixes are preserved. The installed extension needs this update once; **subsequent songs do not require rebuilding it**.
+The accompanying Geyser extension is in [`compat/bedrock/`](../compat/bedrock/README.md), with a mirror in the wiki checkout at `server/bedrock-speakers/`. Its existing audio coordination, voxel and plate fixes are preserved. The installed extension needs this update once; **subsequent songs do not require rebuilding it**.
 
 New prepared sound IDs are self-describing:
 

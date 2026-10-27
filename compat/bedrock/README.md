@@ -104,4 +104,4 @@ New Copper Speakers joining events encode the original sound and sample offset, 
 
 Legacy opaque prepared events can also be loaded from `config/copper-speakers/joining/events.json`. The extension refreshes that atomic JSON file in the background and keeps its last valid table on errors. Override its location with `-Dcopperbedrock.preparedEvents=/absolute/path/events.json`. Existing embedded mappings remain a fallback; building an extension no longer requires a legacy catalogue.
 
-The complete local settings/status protocol and wiki integration contract are documented in the Copper Speakers repository at `docs/wiki-music-bridge.md`. Preparation settings are independent of normal song publication. This change has been built and tested locally; it does not install or restart anything on the live server.
+The complete local settings/status protocol and wiki integration contract are documented in the [wiki bridge contract](../../docs/wiki-music-bridge.md). Preparation settings are independent of normal song publication. This change has been built and tested locally; it does not install or restart anything on the live server.
