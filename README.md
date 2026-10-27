@@ -26,7 +26,7 @@ Bedrock playback is available through the separate **CopperBedrock** compatibili
 
 The tested setup is Minecraft Java **26.3**, Geyser-Fabric **2.12.1-b1273**, and Bedrock **26.60** (protocol **2225**). Speaker range extension, including custom music, has been confirmed in game on Java and Bedrock. The companion handles buffered audio, prepared joining events, wire and resin geometry, wall-plate entities, and speaker-note particles. It uses Geyser internals, so other Geyser builds or Bedrock protocols need their own checks.
 
-With the compatibility bundle installed, Bedrock functionality has reached parity with Java on the tested server, as confirmed by its operator. The socket-face restriction below applies on both editions. All 45 Minecraft tests and four graph tests pass. See [Bedrock support](compat/bedrock/README.md) for build and installation instructions, pinned dependencies, and verification limits.
+With the compatibility bundle installed, core playback and speaker range extension have been confirmed in game. Relative timing between Bedrock audio sources is under investigation; Java timing benchmarks do not establish Bedrock synchronization. The socket-face restriction below applies on both editions. All 45 Minecraft tests and four graph tests pass. See [Bedrock support](compat/bedrock/README.md) for build and installation instructions, pinned dependencies, and verification limits.
 
 ## Build your first system
 
