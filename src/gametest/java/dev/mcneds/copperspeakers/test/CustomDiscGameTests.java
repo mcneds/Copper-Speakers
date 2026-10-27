@@ -99,8 +99,10 @@ public final class CustomDiscGameTests {
         }
         h.setBlock(WIRE, Blocks.AIR);
         box.setTheItem(disc(song(h)));
-        check(box.getSongPlayer().isPlaying() && !AudioNetworks.get(h.getLevel()).hasSession(h.absolutePos(MASTER)),
-                "Prepared custom songs also remain standalone without connected speakers");
+        check(box.getSongPlayer().isPlaying()
+                        && AudioNetworks.get(h.getLevel()).sources(h.absolutePos(MASTER)).equals(java.util.Set.of(h.absolutePos(MASTER))),
+                "Custom songs also coordinate playback without connected speakers");
+        box.popOutTheItem();
         h.succeed();
     }
 

@@ -5,12 +5,14 @@ import dev.mcneds.copperspeakers.CopperSpeakers;
 import dev.mcneds.copperspeakers.network.AudioNetworks;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.EntityBoundSoundInstance;
 import net.minecraft.client.sounds.ChannelAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.openal.AL11;
 import java.nio.file.*;
@@ -97,6 +99,66 @@ public final class DistancePlaybackTest {
                 connection.waitForClientboundPackets();
                 context.waitFor(c -> !songs(c.level).containsKey(FAR));
                 report.put("ejectionStopsFarSource", true);
+
+                // Reproduce a standalone locked-hopper start while the listener is
+                // 1,000 blocks away. Only this disposable fixture holds the chunk.
+                server.runOnServer(s -> {
+                    var level = s.overworld();
+                    for (int x = 1; x <= 96; x++) level.setBlockAndUpdate(new BlockPos(x, 90, 0), Blocks.AIR.defaultBlockState());
+                    level.setBlockAndUpdate(MASTER.above().east(), Blocks.REDSTONE_BLOCK.defaultBlockState());
+                    level.setBlockAndUpdate(MASTER.above(), Blocks.HOPPER.defaultBlockState());
+                    ((HopperBlockEntity)level.getBlockEntity(MASTER.above())).setItem(0, new ItemStack(Items.MUSIC_DISC_CAT));
+                });
+                context.waitTicks(12);
+                server.runOnServer(s -> {
+                    if (!((JukeboxBlockEntity)s.overworld().getBlockEntity(MASTER)).getTheItem().isEmpty())
+                        throw new AssertionError("Locked hopper must retain its disc");
+                });
+                server.runCommand("tick freeze");
+                server.runCommand("setblock 1 91 0 minecraft:air");
+                server.runCommand("tp @a 1000 91 -2 0 20");
+                connection.waitForClientboundPackets();
+                server.runOnServer(s -> {
+                    if (!((JukeboxBlockEntity)s.overworld().getBlockEntity(MASTER)).getTheItem().isEmpty())
+                        throw new AssertionError("Frozen ticks must defer the unlocked hopper's insertion");
+                });
+                server.runCommand("tick unfreeze");
+                var standaloneId = new int[1];
+                server.runOnServer(s -> standaloneId[0] = AudioNetworks.get(s.overworld()).speakerVoiceId(MASTER, MASTER));
+                // Hopper insertion may occur on the following server tick.
+                for (int ticks = 0; standaloneId[0] == -1 && ticks < 100; ticks++) {
+                    context.waitTicks(1);
+                    server.runOnServer(s -> standaloneId[0] = AudioNetworks.get(s.overworld()).speakerVoiceId(MASTER, MASTER));
+                }
+                if (standaloneId[0] == -1) throw new AssertionError("Hopper did not create a standalone audio anchor");
+                context.waitFor(c -> entitySound(c, standaloneId[0]) != null);
+                var standalone = context.computeOnClient(c -> entitySound(c, standaloneId[0]));
+                context.waitFor(c -> c.getSoundManager().isActive(standalone));
+                context.waitTicks(30);
+                double standaloneBefore = offset(context, standalone);
+                server.runOnServer(s -> {
+                    if (!AudioNetworks.get(s.overworld()).sources(MASTER).equals(Set.of(MASTER)))
+                        throw new AssertionError("Standalone fixture must contain exactly the jukebox source");
+                });
+                if (standaloneBefore <= 0) throw new AssertionError("Standalone audio must advance for the distant listener");
+                report.put("standaloneOffsetWhile1000BlocksAway", standaloneBefore);
+                server.runCommand("tp @a 0 91 -2 0 20");
+                connection.waitForClientboundPackets();
+                context.waitTicks(10);
+                double standaloneAfter = offset(context, standalone);
+                boolean sameStandalone = context.computeOnClient(c -> entitySound(c, standaloneId[0]) == standalone
+                        && c.getSoundManager().isActive(standalone));
+                double standaloneDistance = context.computeOnClient(c -> c.player.distanceToSqr(
+                        standalone.getX(), standalone.getY(), standalone.getZ()));
+                float standaloneRadius = standalone.getSound().getAttenuationDistance(standalone.getVolume());
+                if (!sameStandalone || standaloneAfter <= standaloneBefore || standaloneDistance >= standaloneRadius * standaloneRadius)
+                    throw new AssertionError("Returning must hear the same advancing standalone source without a restart");
+                report.put("standaloneSameSourceAfterReturning", sameStandalone);
+                report.put("standaloneOffsetAfterReturning", standaloneAfter);
+                server.runOnServer(s -> ((JukeboxBlockEntity)s.overworld().getBlockEntity(MASTER)).popOutTheItem());
+                connection.waitForClientboundPackets();
+                context.waitFor(c -> !songs(c.level).containsKey(MASTER) && !c.getSoundManager().isActive(standalone));
+                report.put("standaloneEjectionStopsPlayback", true);
             }
             report.put("status", "complete");
         } catch (Throwable e) {
@@ -108,6 +170,12 @@ public final class DistancePlaybackTest {
         }
     }
     private static Map<BlockPos, SoundInstance> songs(Object level) { return field(field(level, "levelEventHandler"), "playingJukeboxSongs"); }
+    private static SoundInstance entitySound(net.minecraft.client.Minecraft client, int entityId) {
+        Object engine = field(client.getSoundManager(), "soundEngine");
+        Map<SoundInstance, ChannelAccess.ChannelHandle> channels = field(engine, "instanceToChannel");
+        return channels.keySet().stream().filter(sound -> sound instanceof EntityBoundSoundInstance
+                && ((net.minecraft.world.entity.Entity)field(sound, "entity")).getId() == entityId).findFirst().orElse(null);
+    }
     private static double offset(ClientGameTestContext context, SoundInstance sound) throws Exception {
         var done = new CompletableFuture<Double>();
         context.runOnClient(c -> {

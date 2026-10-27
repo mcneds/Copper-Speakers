@@ -101,13 +101,77 @@ public final class CopperGameTests {
         check(!network(h).hasSession(master(h)), "Explicit removal must still cancel natural tails");
         h.succeed();
     }
-    @GameTest(structure = ARENA) public void standaloneKeepsVanillaLifecycle(GameTestHelper h) {
+    @GameTest(structure = ARENA) public void standaloneUsesCoordinatedPlayback(GameTestHelper h) {
         h.setBlock(MASTER, Blocks.JUKEBOX);
         var box = h.getBlockEntity(MASTER, JukeboxBlockEntity.class); insert(box);
         check(box.getSongPlayer().isPlaying(), "Standalone jukebox must play");
-        check(!network(h).hasSession(master(h)), "Standalone must not use buffered network session");
+        check(network(h).sources(master(h)).equals(java.util.Set.of(master(h))),
+                "Standalone playback must register the jukebox for distant listeners");
+        check(network(h).spareVoiceCount(master(h)) == 4, "Standalone playback reserves advancing speaker voices");
+        check(box.getComparatorOutput() == 2, "Standalone comparator output is preserved");
         box.popOutTheItem();
-        check(!box.getSongPlayer().isPlaying(), "Standalone ejection remains vanilla");
+        check(!box.getSongPlayer().isPlaying() && !network(h).hasSession(master(h)),
+                "Standalone ejection stops the song and coordinated playback");
+        h.succeed();
+    }
+    @GameTest(structure = ARENA) public void standaloneCanGainItsFirstSpeakerDuringPlayback(GameTestHelper h) {
+        h.setBlock(MASTER.below(), Blocks.STONE);
+        h.setBlock(MASTER, Blocks.JUKEBOX);
+        var box = h.getBlockEntity(MASTER, JukeboxBlockEntity.class); insert(box);
+        var net = network(h);
+        var initialIds = net.spareEntityIds(master(h));
+        h.setBlock(MASTER.east().below(), Blocks.STONE);
+        h.setBlock(MASTER.east(), CopperSpeakers.SPEAKER);
+        net.tick();
+        check(net.sources(master(h)).equals(java.util.Set.of(master(h), h.absolutePos(MASTER.east()))),
+                "The first speaker joins an already playing standalone jukebox");
+        check(net.spareEntityIds(master(h)).equals(initialIds) && net.spareVoiceCount(master(h)) == 3,
+                "The first speaker uses an existing voice without restarting the jukebox");
+        box.popOutTheItem();
+        h.succeed();
+    }
+    @GameTest(structure = ARENA, maxTicks = 100) public void standaloneLockedHopperInsertionAndExtraction(GameTestHelper h) {
+        h.setBlock(MASTER, Blocks.JUKEBOX);
+        h.setBlock(MASTER.above().east(), Blocks.REDSTONE_BLOCK);
+        h.setBlock(MASTER.above(), Blocks.HOPPER);
+        var box = h.getBlockEntity(MASTER, JukeboxBlockEntity.class);
+        h.getBlockEntity(MASTER.above(), HopperBlockEntity.class).setItem(0, new ItemStack(Items.MUSIC_DISC_CAT));
+        h.runAtTickTime(12, () -> {
+            check(box.getTheItem().isEmpty() && !network(h).hasSession(master(h)), "A locked hopper cannot start playback");
+            h.setBlock(MASTER.above().east(), Blocks.AIR);
+        });
+        h.runAtTickTime(30, () -> {
+            check(box.getSongPlayer().isPlaying() && network(h).sources(master(h)).equals(java.util.Set.of(master(h))),
+                    "Unlocking the hopper starts coordinated playback without speakers");
+            h.setBlock(MASTER.below(), Blocks.HOPPER);
+            var song = h.getLevel().registryAccess().lookupOrThrow(Registries.JUKEBOX_SONG)
+                    .get(Identifier.withDefaultNamespace("cat")).orElseThrow();
+            box.getSongPlayer().setSongWithoutPlaying(song, song.value().lengthInTicks() + 19);
+            box.getSongPlayer().tick(h.getLevel(), box.getBlockState());
+            box.getSongPlayer().tick(h.getLevel(), box.getBlockState());
+            check(network(h).isNaturalTail(master(h)), "Standalone completion retains cancellable audio tails");
+        });
+        h.runAtTickTime(50, () -> {
+            check(h.getBlockEntity(MASTER.below(), HopperBlockEntity.class).getItem(0).is(Items.MUSIC_DISC_CAT),
+                    "The lower hopper extracts the finished standalone disc");
+            check(!network(h).hasSession(master(h)), "Hopper extraction cancels standalone audio tails");
+            h.succeed();
+        });
+    }
+    @GameTest(structure = ARENA) public void standaloneAllVanillaDiscsUseCoordinatedPlayback(GameTestHelper h) {
+        h.setBlock(MASTER, Blocks.JUKEBOX);
+        var box = h.getBlockEntity(MASTER, JukeboxBlockEntity.class);
+        int tested = 0;
+        for (var item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+            var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item);
+            if (!id.getNamespace().equals("minecraft") || !id.getPath().startsWith("music_disc_")) continue;
+            box.setTheItem(new ItemStack(item));
+            check(box.getSongPlayer().isPlaying() && network(h).sources(master(h)).equals(java.util.Set.of(master(h))),
+                    "Every vanilla disc coordinates standalone playback: " + id);
+            box.popOutTheItem();
+            tested++;
+        }
+        check(tested == 22, "Exercise all 22 standalone vanilla discs");
         h.succeed();
     }
     @GameTest(structure = ARENA) public void disconnectReconnectAndNewSpeakers(GameTestHelper h) {

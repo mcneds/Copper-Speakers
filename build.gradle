@@ -1,6 +1,6 @@
 plugins { id 'net.fabricmc.fabric-loom' version '1.16.3' }
 group = 'dev.mcneds'
-version = '0.2.0'
+version = '0.2.1+mineandcraft.3'
 base { archivesName = 'copper-speakers' }
 repositories {
     mavenCentral()
@@ -45,6 +45,7 @@ loom {
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }
 tasks.withType(Test).configureEach { useJUnitPlatform() }
 processResources { inputs.property 'version', project.version; filesMatching('fabric.mod.json') { expand version: project.version } }
+processResources { from('tools/prepare-join-audio.py') { into 'copper-speakers' } }
 tasks.withType(JavaExec).configureEach {
     if (name.toLowerCase().contains('client') && providers.gradleProperty('performanceMods').isPresent()) classpath += configurations.clientPerformance
     if (providers.gradleProperty('runtimeJava').isPresent()) executable = providers.gradleProperty('runtimeJava').get()

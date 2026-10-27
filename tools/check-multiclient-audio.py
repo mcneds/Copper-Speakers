@@ -28,6 +28,7 @@ def main():
     parser.add_argument('--diagnostic', action='store_true', help='Functional validation only; no performance result')
     parser.add_argument('--pretouch-stacks', action='store_true')
     parser.add_argument('--sound', help='Catalogue sound event to exercise as a normal custom jukebox song')
+    parser.add_argument('--live-source', type=Path, help='Start without a catalogue, enable this source live, then test disable and deferred deletion')
     parser.add_argument('--extended', action='store_true', help='Also check independent groups, cancelled warmup and dimension return')
     parser.add_argument('--packaged', action='store_true', help='Run the dedicated server from the built release jar')
     parser.add_argument('--vanilla-smoke', action='store_true', help='After timing checks, run an untouched client and measure only its Windows audio-session peak')
@@ -49,10 +50,11 @@ def main():
         'enable-rcon=true\nrcon.port=28902\nrcon.password=copper-local-development\nwhite-list=false\n'
         'gamemode=spectator\nforce-gamemode=true\nallow-flight=true\nspawn-protection=0\n'
         'view-distance=4\nsimulation-distance=4\nlevel-seed=1\n')
-    shutil.copytree(args.catalog.resolve(), work / 'config/copper-speakers/tails')
+    if not args.live_source:
+        shutil.copytree(args.catalog.resolve(), work / 'config/copper-speakers/tails')
     item = 'minecraft:music_disc_cat'
     if args.sound:
-        track = json.loads((args.catalog / 'catalog.json').read_text())['tracks'][args.sound]
+        track = json.loads((args.catalog / 'catalog.json').read_text(encoding="utf-8"))['tracks'][args.sound]
         pack = work / 'world/datapacks/custom-probe'
         song = pack / 'data/copper_speakers_probe/jukebox_song/custom.json'
         song.parent.mkdir(parents=True)
@@ -72,6 +74,7 @@ def main():
     result['pretouchStacks'] = args.pretouch_stacks
     result['sound'] = args.sound or 'minecraft:music_disc.cat'
     result['extended'] = args.extended
+    result['liveControl'] = bool(args.live_source)
     result['clientHeap'] = args.client_heap
     result['serverHeap'] = args.server_heap
     digest = hashlib.sha256()
@@ -82,8 +85,8 @@ def main():
     result['catalogueSha256'] = hashlib.sha256((args.catalog / 'catalog.json').read_bytes()).hexdigest()
     server_args = ROOT / 'build/runServer.args'
     if args.packaged:
-        jar = Path((ROOT / 'build/release-jar.txt').read_text().strip())
-        values = shlex.split(server_args.read_text())
+        jar = Path((ROOT / 'build/release-jar.txt').read_text(encoding="utf-8").strip())
+        values = shlex.split(server_args.read_text(encoding="utf-8"))
         cp = values.index('-classpath') + 1
         excluded = {(ROOT / p).resolve() for p in ('build/classes/java/main', 'build/resources/main')}
         values[cp] = os.pathsep.join([p for p in values[cp].split(os.pathsep) if Path(p).resolve() not in excluded] + [str(jar)])
@@ -120,6 +123,24 @@ def main():
         except (OSError, ConnectionError):
             return False
 
+    joining = work / 'config/copper-speakers/joining'
+    sound = args.sound or 'minecraft:music_disc.cat'
+
+    def change_joining(command):
+        subprocess.run([sys.executable, str(ROOT / 'tools/joining-control.py'), '--root', str(joining),
+                        command, sound, *(['--source', str(args.live_source.resolve())] if command == 'enable' else [])], check=True)
+        settings = json.loads((joining / 'settings.json').read_text(encoding="utf-8"))['tracks'][sound]
+        def accepted():
+            try:
+                row = json.loads((joining / 'status.json').read_text(encoding="utf-8"))['tracks'][sound]
+                if row.get('state') == 'failed':
+                    raise RuntimeError('Live preparation failed: ' + str(row))
+                return row.get('revision') == settings['revision'] and row.get('state') != 'preparing'
+            except (FileNotFoundError, KeyError, json.JSONDecodeError):
+                return False
+        wait(accepted, 240)
+        return json.loads((joining / 'status.json').read_text(encoding="utf-8"))['tracks'][sound]
+
     try:
         java = args.java or ROOT / '.runtime/zulu25.38.107-ca-jre25.0.5-win_x64/bin/java.exe'
         server = launch('server', [str(java), '-Xmx' + args.server_heap, '-XX:ActiveProcessorCount=4', '@' + str(server_args)], work)
@@ -132,7 +153,8 @@ def main():
         for role in ('a', 'b'):
             env = os.environ.copy()
             env.update(COPPER_OBSERVER_ROLE=role, COPPER_OBSERVER_CONTROL=str(control),
-                       COPPER_OBSERVER_CATALOG=str(args.catalog.resolve() / 'catalog.json'))
+                       COPPER_OBSERVER_CATALOG=str(args.catalog.resolve() / 'catalog.json'),
+                       COPPER_OBSERVER_ORIGINAL=str(bool(args.live_source)).lower())
             launch('launcher-' + role, [sys.executable, str(ROOT / 'tools/run.py'), 'observe',
                 '--name', args.name + '-' + role, '--instance', args.name.replace('-', '') + role,
                 '--heap', args.client_heap, *(['--diagnostic'] if args.diagnostic else ['--processors', '4']),
@@ -141,9 +163,21 @@ def main():
         checkpoint('both-clients-ready')
         (control / 'a.connect').touch()
         wait(lambda: (control / 'a.connected').exists())
-        name_a = (control / 'a.connected').read_text()
+        name_a = (control / 'a.connected').read_text(encoding="utf-8")
         rcon.command(f'tp {name_a} 0 91 -2')
         time.sleep(1)
+        if args.live_source:
+            checkpoint('ordinary-insert-before-enable')
+            rcon.command('item replace block 0 90 0 container.0 with ' + item)
+            time.sleep(4)
+            main_pack = work / 'polymer/resource_pack.zip'
+            pack_before = hashlib.sha256(main_pack.read_bytes()).hexdigest()
+            assert change_joining('enable')['state'] == 'ready'
+            checkpoint('live-preparation-ready')
+            time.sleep(3)
+            assert hashlib.sha256(main_pack.read_bytes()).hexdigest() == pack_before, 'Main pack changed during preparation'
+            rcon.command('item replace block 0 90 0 container.0 with minecraft:air')
+            time.sleep(1)
         checkpoint('insert-disc')
         insertion = rcon.command('item replace block 0 90 0 container.0 with ' + item)
         print(insertion, flush=True)
@@ -152,7 +186,7 @@ def main():
         checkpoint('late-client-connect')
         (control / 'b.connect').touch()
         wait(lambda: (control / 'b.connected').exists())
-        name_b = (control / 'b.connected').read_text()
+        name_b = (control / 'b.connected').read_text(encoding="utf-8")
         rcon.command(f'tp {name_b} 256 91 -2')
         checkpoint('late-client-outside-range')
         time.sleep(12)
@@ -186,15 +220,29 @@ def main():
             rcon.command(f'execute in minecraft:overworld run tp {name_a} 0 91 -2')
             checkpoint('initial-client-returns')
             time.sleep(18)
+        if args.live_source:
+            checkpoint('disable-admissions')
+            assert change_joining('disable')['state'] == 'disabled'
+            assert change_joining('delete')['state'] == 'deletion_pending'
+            assert list((joining / 'songs').glob('*/catalog.json')), 'Active playback audio was deleted'
+            time.sleep(3)
+            rcon.command(f'execute in minecraft:the_nether run tp {name_b} 0 100 0')
+            time.sleep(3)
+            rcon.command(f'execute in minecraft:overworld run tp {name_b} 2 91 -2')
+            checkpoint('disabled-client-returns')
+            time.sleep(20)
         rcon.command('setblock 0 90 0 minecraft:air')
         checkpoint('stop-music')
+        if args.live_source:
+            wait(lambda: not list((joining / 'songs').glob('*/catalog.json')))
+            result.update(mainPackUnchanged=True, livePreparationSucceeded=True, deletionDeferredUntilStop=True)
         time.sleep(2)
         (control / 'stop').touch()
         for process in processes[1:]:
             process.wait(timeout=45)
             if process.returncode != 0:
                 raise RuntimeError('Observer failed')
-        reports = {r: json.loads((ROOT / 'build/validation' / (args.name + '-' + r) / 'observe.json').read_text()) for r in ('a', 'b')}
+        reports = {r: json.loads((ROOT / 'build/validation' / (args.name + '-' + r) / 'observe.json').read_text(encoding="utf-8")) for r in ('a', 'b')}
         assert all(r['status'] == 'complete' for r in reports.values())
         assert all(any(abs(s['x'] - 4.5) < .01 and abs(s['z'] - .5) < .01
                        for f in report['observations'] for s in f['sounds']) for report in reports.values()), 'Late speaker was not connected and playing'
@@ -211,7 +259,23 @@ def main():
             assert spreads[role] <= 25, f'{role}: speaker start spread {spreads[role]:.1f} ms'
         result['maxWithinClientSpeakerSpreadMs'] = spreads
         marks = {p['name']: p['hostNanos'] for p in checkpoints}
+        if args.live_source:
+            original = [s for frame in reports['a']['observations']
+                        if marks['ordinary-insert-before-enable'] < frame['hostNanos'] < marks['live-preparation-ready'] + 2_000_000_000
+                        for s in frame['sounds'] if abs(s['x'] - .5) < .01 and abs(s['z'] - .5) < .01]
+            assert original and all(not s['event'].startswith('copper_speakers:tail/') for s in original), 'Playing ordinary song changed audio'
+            assert len({(s['source'], s['buffer'], s['event']) for s in original}) == 1, 'Enable interrupted original listeners'
+            assert max(s['nativeStartSeconds'] for s in original) - min(s['nativeStartSeconds'] for s in original) < .002
+            assert not any(f['sounds'] for f in reports['b']['observations']
+                           if f['hostNanos'] > marks['disabled-client-returns'] + 2_000_000_000), 'Disabled song admitted a returning listener'
+            messages = [f.get('actionBar', '') for report in reports.values() for f in report['observations']]
+            assert any(m.startswith('Joining music in ') for m in messages), 'No action-bar countdown was observed'
+            assert any(m == 'C418 - cat' for m in messages) if not args.sound else True
+            assert any(m == 'Loading music…' for m in messages), 'No loading action bar was observed'
+            assert any(f.get('actionBar') == 'Loading music…' for f in reports['b']['observations']), 'Late joiner did not see pack-loading progress'
+            result.update(enablePreservedOrdinaryPlayback=True, disabledAdmissionsStopped=True, actionBarCountdownObserved=True)
         root_samples = {r: [s for f in report['observations']
+                           if not args.live_source or f['hostNanos'] > marks['insert-disc']
                            if r != 'a' or not args.extended or f['hostNanos'] < marks['initial-client-leaves-dimension']
                            for s in f['sounds'] if abs(s['x'] - .5) < .01 and abs(s['z'] - .5) < .01] for r, report in reports.items()}
         assert all(root_samples.values()), 'Both clients must receive audio'

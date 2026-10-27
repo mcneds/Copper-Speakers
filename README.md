@@ -6,7 +6,21 @@ Copper Speakers is a Fabric/Polymer mod for **Minecraft Java Edition 26.3**, for
 
 ## Installation
 
-Install Copper Speakers, **Fabric API**, and **bundled Polymer for Minecraft 26.3**. This release requires Fabric Loader **0.19.5 or newer**, Java **25**, and Polymer **0.18.4 or a later 0.18.x release**.
+Requirements for a single-player instance or multiplayer server:
+
+- **Minecraft Java Edition 26.3**.
+- **Java 25**.
+- **Fabric Loader 0.19.5 or newer**, installed for Minecraft 26.3.
+
+Download these **three separate mod jars** for the `mods` folder:
+
+| Mod | Required version |
+| --- | --- |
+| **Copper Speakers** | **0.2.1+mineandcraft.3** for Minecraft **26.3** |
+| **Fabric API** | A release for Minecraft **26.3**; this project builds against **0.163.0+26.3** |
+| **Polymer bundle** | **0.18.4 or a later 0.18.x release** for Minecraft **26.3** |
+
+The Polymer bundle packages Polymer Core, Blocks, Resource Pack, Virtual Entity, and AutoHost together in one jar. Download and install that bundle separately; it is not included in the Copper Speakers jar.
 
 ### Single-player
 
@@ -14,7 +28,7 @@ Put the three mod jars in your Fabric instance's `mods` folder, then open your w
 
 ### Multiplayer servers
 
-Put the three mod jars in the Fabric server's `mods` folder and restart it. Bundled Polymer includes AutoHost, which generates and serves the resource pack.
+Put the three mod jars in the Fabric server's `mods` folder and restart it. The Polymer bundle includes AutoHost, which generates and serves the resource pack.
 
 Players **do not need Copper Speakers, Fabric, or Polymer installed on their clients** to join. They only need to accept the server resource pack. Players using modded clients can join too; an unmodified client is not a requirement.
 
@@ -48,7 +62,7 @@ Collect copper and a note block to unlock the corresponding recipe-book entries.
 
 ### Through walls
 
-Use a wall plate on a full, solid block to fit sockets on its opposite faces. Wire in front of either face connects through the block. A speaker can sit directly against either socket without a wire segment between them; either the speaker or the plate can be placed first. Plate adjoining full blocks to extend the route through thicker walls. The plated block connects to neighboring nodes horizontally at its own height.
+Use a wall plate on a full, solid block to fit sockets on its opposite faces. Only those two socket faces connect to wire or speakers at the same height; cable beside either unsocketed face stays disconnected. A speaker can sit directly against either socket without a wire segment between them; either the speaker or the plate can be placed first. Plate adjoining full blocks to extend the route through thicker walls, with both socket pairs aligned along the connection.
 
 Side clicks select the plate's direction; top or bottom clicks use the player's horizontal facing. Partial blocks, fluids, block entities and speakers cannot host plates. Punch either exposed plate to remove the pair and recover the item in survival.
 
@@ -65,9 +79,11 @@ Every built-in disc works without conversion or special speaker items. Custom di
 Built-in songs use buffered audio for closer alignment between speakers. Other songs retain their own audio settings unless their pack provides an optional buffered alias. **Streamed custom songs can have more timing variation** and consume streaming sound channels; playback is supported without claiming sample-accurate synchronization. Pack authors can find the optional buffering format in [Audio compatibility](docs/audio.md).
 
 - Players already in the dimension can walk or teleport into range during playback, even if they were far away when the disc started.
+- Standalone jukeboxes use the same playback handling, including hopper insertion. No connected speaker is needed.
+- [Per-song controls](docs/wiki-music-bridge.md) prepare and register joining audio live, with 15-second joining points by default. Disable admissions independently or request deletion after playback and downloads release the audio.
 - With [prepared joining audio](docs/late-listeners.md), players who connect later or return from another dimension join the current song position after a short wait. Existing listeners keep playing continuously. This uses ordinary resource packs; no client mod is required.
 - Without prepared audio for that track, a new connection or dimension change still requires a fresh insertion. All normal discs remain playable through speakers.
-- If a speaker was connected at the start, up to **four additional speakers at a time** can join during that track. Disconnecting one of these frees its slot. Further speakers wait for a slot or the next insertion.
+- Up to **four additional speakers at a time** can join during a track, including the first speaker connected to a playing standalone jukebox. Disconnecting one of these frees its slot. Further speakers wait for a slot or the next insertion.
 - The first active jukebox owns a connected network. A second disc on that network waits silently and must be ejected and reinserted to start its own group.
 - Copper Speakers does not keep chunks loaded. Unloading the main jukebox ends its session; returning or restarting the game does not resume it.
 - Large groups can reach the client's sound-channel limit. Networks are limited to **4,096 nodes**; an oversized network leaves the jukebox playing alone.
@@ -92,7 +108,7 @@ With a Java 25 JDK:
 ./gradlew.bat build
 ```
 
-The release jar is `build/libs/copper-speakers-0.2.0.jar`. The build runs graph unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
+The release jar is `build/libs/copper-speakers-0.2.1+mineandcraft.3.jar`. The build runs graph unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
 
 See [Development](docs/development.md) for local launches, client checks and asset generation. Java Edition is the tested target; Bedrock playback through Geyser has not been verified.
 

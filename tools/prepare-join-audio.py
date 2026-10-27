@@ -164,7 +164,7 @@ def main():
     parser.add_argument('--assets', type=Path, help='Minecraft asset cache containing indexes/26.3-34.json and objects/')
     parser.add_argument('--vanilla', nargs='*', help='Vanilla names such as cat; no names means all built-in discs')
     parser.add_argument('--song', action='append', default=[], help='Registered sound-event=local-mono.ogg (repeatable)')
-    parser.add_argument('--spacing', type=float, default=5, help='Target seconds between entry points (default 5)')
+    parser.add_argument('--spacing', type=float, default=15, help='Target seconds between entry points (default 15)')
     parser.add_argument('--pack-mib', type=int, default=128, help='Maximum audio bytes per pack (default 128 MiB)')
     args = parser.parse_args()
     if not 1 <= args.spacing <= 30 or not 1 <= args.pack_mib <= 190:
@@ -262,7 +262,9 @@ def main():
                         normalize_short_end(file, len(original) + original_lead - offset)
                     if offset <= previous:
                         continue
-                    tail_event = f'copper_speakers:tail/{source_hash[:24]}/{offset}'
+                    # Bedrock can resolve new events immediately from the original
+                    # published sound and sample offset, without an extension rebuild.
+                    tail_event = f'copper_speakers:tail/v1/{event.encode("utf-8").hex()}/{source_hash[:24]}/{rate}/{offset}'
                     if offset == 0:
                         base_audio.append((tail_event, source))
                     else:

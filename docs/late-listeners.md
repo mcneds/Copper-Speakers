@@ -1,12 +1,16 @@
 # Joining music already in progress
 
-Copper Speakers 0.2.0 supports late listeners using a server-side audio catalogue and ordinary resource packs. Players need no client mod. A standalone jukebox keeps vanilla playback; this feature coordinates the jukebox and speakers of a wired network.
+Copper Speakers supports late listeners using a server-side audio catalogue and ordinary resource packs. Players need no client mod. Both standalone jukeboxes and wired speaker networks use this playback handling.
 
 Players already in the dimension receive playback at insertion, including players outside listening range. Minecraft's normal distance attenuation makes it audible when they approach. Walking into range therefore needs no restart or new download.
 
-Players connecting after insertion or returning from another dimension need prepared joining audio for the track. They wait for their packs to finish loading, then normally another **3–8 seconds** with the default settings. They start at a future point on the existing song timeline. The other listeners receive no restart, stop, or resource-pack refresh.
+Players connecting after insertion or returning from another dimension need prepared joining audio for the track. They wait for their packs to finish loading, then normally another **3–18 seconds** with the default settings. They start at a future point on the existing song timeline. The other listeners receive no restart, stop, or resource-pack refresh.
 
-## Prepare the catalogue
+## Per-song control while the server runs
+
+Use the [local control and wiki bridge contract](wiki-music-bridge.md) to enable, disable, prepare, inspect, or request deferred deletion for one song. The default is 15-second joining points. This runs without rebuilding the main music pack or restarting Minecraft. An already playing ordinary song keeps its listeners and uses prepared joining on the next insertion. Legacy catalogues remain supported.
+
+## Prepare a legacy catalogue
 
 On the server or another computer, install Python 3, NumPy, FFmpeg and ffprobe. The latter two must be on `PATH`. Run this from the repository:
 
@@ -34,15 +38,15 @@ The generator refuses to overwrite an existing output directory. Music stays out
 
 ## Delivery and timing
 
-The server stores a full recording and continuous suffixes at roughly five-second intervals. These are copied Vorbis packets rather than separately re-encoded chunks. The catalogue accounts for Minecraft's decoder lead-in and each suffix's actual sample offset. A small codec startup transient can remain at a join; there are no repeated segment boundaries during subsequent playback.
+The server stores a full recording and continuous suffixes at roughly fifteen-second intervals. These are copied Vorbis packets rather than separately re-encoded chunks. The catalogue accounts for Minecraft's decoder lead-in and each suffix's actual sample offset. A small codec startup transient can remain at a join; there are no repeated segment boundaries during subsequent playback.
 
-At login, clients receive a base pack containing full recordings plus joining packs for tracks currently playing. Additional joining packs are requested only for a player who needs them, such as after changing dimensions. The server waits for that player's successful pack-load responses before scheduling audio. Other players keep their existing packs and sound sources.
+Legacy catalogue base packs are still delivered at login. Other prepared packs are requested after entering the world, only for a player who needs to join a playing song, so their action bar can show loading progress. New per-song full recordings are included in that live request. The server waits for that player's successful pack-load responses before scheduling audio. Other players keep their existing packs and sound sources.
 
 Initial prepared playback gives clients three seconds for decoding after the warm-up packets are sent. If the server stalls before anyone starts, it defers the whole beginning rather than skipping the introduction. Once any listener has started, the session's timeline stays fixed. A newcomer gets at least three seconds of preparation, then the next available entry point; an admission that misses its deadline by more than 150 ms moves to a later entry point. There is no suitable entry point during the last few seconds of a track; a newcomer then waits for the next disc.
 
 Synchronization is approximate. Vanilla clients cannot acknowledge when their audio actually starts, and network latency, frame stalls and output devices can introduce differences. The server does not seek or continually correct a running client. Local two-client measurements are documented in the benchmarks; they are not a guarantee for Internet connections or physical speakers.
 
-Prepared packs use more server storage than original recordings because suffixes overlap. Downloads are split into packs below Minecraft's size limit; the default audio budget is 128 MiB per ZIP. `--spacing 10` reduces storage and increases the maximum joining wait. Full decoded recordings also consume client memory, and every source uses a sound channel. Large networks or many concurrent tracks can exceed client limits.
+Prepared packs use more server storage than original recordings because suffixes overlap. Downloads are split into packs below Minecraft's size limit; the default audio budget is 128 MiB per ZIP. `--spacing 30` reduces storage further and increases the maximum joining wait. Full decoded recordings also consume client memory, and every source uses a sound channel. Large networks or many concurrent tracks can exceed client limits.
 
 Manually reloading client sounds/resources during playback can interrupt that client's audio; reconnect to rejoin. Unloading the main jukebox ends its session. Playback is not resumed across a server restart.
 

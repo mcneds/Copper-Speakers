@@ -34,8 +34,15 @@ public final class RemoteAudioObserver {
             var offsets = new HashMap<String, Double>();
             var frames = new HashMap<String, Long>();
             var catalogue = JsonParser.parseString(Files.readString(Path.of(System.getenv("COPPER_OBSERVER_CATALOG")))).getAsJsonObject();
-            for (var value : catalogue.getAsJsonObject("tracks").asMap().values()) {
-                var track = value.getAsJsonObject();
+            for (var row : catalogue.getAsJsonObject("tracks").entrySet()) {
+                var track = row.getValue().getAsJsonObject();
+                if (Boolean.parseBoolean(System.getenv("COPPER_OBSERVER_ORIGINAL"))) {
+                    String original = row.getKey();
+                    String buffered = original.startsWith("minecraft:music_disc.")
+                            ? "copper_speakers:buffered." + original.substring("minecraft:music_disc.".length()) : original;
+                    offsets.put(buffered, 0.0);
+                    frames.put(buffered, track.get("frames").getAsLong());
+                }
                 for (var e : track.getAsJsonArray("entries")) {
                     var entry = e.getAsJsonObject();
                     offsets.put(entry.get("event").getAsString(), entry.get("offsetSeconds").getAsDouble());
@@ -89,6 +96,9 @@ public final class RemoteAudioObserver {
             frame.put("hostNanos", System.nanoTime());
             frame.put("playerX", c.player == null ? null : c.player.getX());
             frame.put("dimension", c.level == null ? null : c.level.dimension().identifier().toString());
+            net.minecraft.network.chat.Component message = field(c.gui.hud, "overlayMessageString");
+            int remaining = field(c.gui.hud, "overlayMessageTime");
+            frame.put("actionBar", remaining > 0 && message != null ? message.getString() : "");
             ChannelAccess access = field(engine, "channelAccess");
             access.executeOnChannels(unused -> {
                 try {
