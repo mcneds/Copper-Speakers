@@ -71,6 +71,47 @@ public final class WallPlateGameTests {
                 .stream().filter(e -> e.getItem().is(CopperSpeakers.WALL_PLATE)).mapToInt(e -> e.getItem().getCount()).sum();
     }
 
+    @GameTest(structure = ARENA) public void plateConnectsDirectlyToExistingSpeaker(GameTestHelper h) {
+        directSpeakerConnection(h, true);
+    }
+    @GameTest(structure = ARENA) public void speakerCanBePlacedDirectlyAgainstExistingPlate(GameTestHelper h) {
+        directSpeakerConnection(h, false);
+    }
+    private static void directSpeakerConnection(GameTestHelper h, boolean speakerFirst) {
+        for (int x = 1; x < 10; x++) for (int z = 1; z < 10; z++) h.setBlock(x, 1, z, Blocks.STONE);
+        h.setBlock(HOST, Blocks.STONE);
+        var player = player(h, GameType.CREATIVE, 1);
+        var network = AudioNetworks.get(h.getLevel());
+        for (var direction : CopperWireBlock.DIRECTIONS) {
+            var speaker = HOST.relative(direction);
+            var wire = HOST.relative(direction.getOpposite());
+            var master = wire.relative(direction.getOpposite());
+            var root = h.absolutePos(master);
+            h.setBlock(master, Blocks.JUKEBOX);
+            h.setBlock(wire, CopperSpeakers.WIRE);
+            if (speakerFirst) h.setBlock(speaker, CopperSpeakers.SPEAKER);
+            check(place(h, player, HOST, direction.getOpposite()), "Plate must fit next to a speaker on " + direction);
+            var plate = plate(h);
+            if (!speakerFirst) h.setBlock(speaker, CopperSpeakers.SPEAKER);
+            reconcile(h);
+            check(plate(h) == plate && plate.survives() && drops(h) == 0,
+                    "An adjacent speaker must not break or drop the plate");
+            check(network.component(root).speakers().contains(h.absolutePos(speaker)),
+                    "The plate must connect directly to the speaker without an output wire");
+            var box = h.getBlockEntity(master, JukeboxBlockEntity.class);
+            box.setTheItem(new ItemStack(Items.MUSIC_DISC_CAT));
+            check(network.sources(root).contains(h.absolutePos(speaker)), "The directly connected speaker must play");
+            plate.breakPlate(player, direction);
+            reconcile(h);
+            check(network.sources(root).size() == 1, "Removing the plate must disconnect the direct speaker");
+            box.popOutTheItem();
+            h.setBlock(master, Blocks.AIR);
+            h.setBlock(wire, Blocks.AIR);
+            h.setBlock(speaker, Blocks.AIR);
+        }
+        h.succeed();
+    }
+
     @GameTest(structure = ARENA) public void wiresOccupyBothPlateFacesAndCarryAudio(GameTestHelper h) {
         setup(h);
         var player = player(h, GameType.SURVIVAL, 2);

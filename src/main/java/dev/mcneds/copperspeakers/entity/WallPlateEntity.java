@@ -67,6 +67,8 @@ public final class WallPlateEntity extends Entity implements PolymerEntity {
                 && faceFits(facing) && faceFits(facing.getOpposite());
     }
     private boolean faceFits(Direction side) {
+        // A directly connected speaker can cover the socket without breaking the plate.
+        if (LoadedBlocks.state(level(), host().relative(side)).is(CopperSpeakers.SPEAKER)) return true;
         // Interior faces of a chain are occluded by the next full block. Its own plate is still
         // required to conduct; simply placing a plate against ordinary stone cannot extend the network.
         return WallPlates.eligible(level(), host().relative(side)) || frame(side).survives();
