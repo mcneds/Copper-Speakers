@@ -1,5 +1,7 @@
 # Late-listener audio sections: feasibility result
 
+> Historical experiment. See the [0.2.0 separate-client results](late-listeners/README.md) and [prepared joining setup](../late-listeners.md) for the implemented feature.
+
 **This experiment is not a released late-joining feature.** Its requirement was to let an arriving player hear the current part of a song without interrupting anyone already listening. The section-playback prototype does not establish that guarantee and has not been merged into the production branch or deployed to the server.
 
 The Minecraft 26.3 packet classes and client sound definition contain no start-offset field. Sending the original sound again starts it from the beginning. The experiment therefore tested separate, exactly two-second audio files through ordinary server sound packets, with the unchanged vanilla sound engine.

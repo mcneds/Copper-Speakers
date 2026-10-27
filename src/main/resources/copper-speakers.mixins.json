@@ -1,6 +1,6 @@
 {
   "required": true, "package": "dev.mcneds.copperspeakers.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["JukeboxSongPlayerMixin", "JukeboxBlockEntityMixin", "LevelChunkMixin"],
+  "mixins": ["JukeboxSongPlayerMixin", "JukeboxBlockEntityMixin", "LevelChunkMixin", "ServerCommonPacketListenerImplMixin"],
   "injectors": { "defaultRequire": 1 }
 }

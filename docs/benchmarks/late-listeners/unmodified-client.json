@@ -1,0 +1,7 @@
+{
+  "status": "complete",
+  "scope": "Untouched publisher client, no Fabric or observer. Only this process audio-session peak is read. Functional audibility/range/stop check; no synchronization timing claim.",
+  "outsidePeak": 0.0,
+  "nearPeak": 0.6295719742774963,
+  "stoppedPeak": 0.0
+}

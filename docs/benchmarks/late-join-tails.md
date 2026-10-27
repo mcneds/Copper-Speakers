@@ -1,5 +1,7 @@
 # Prepared audio tails for late listeners
 
+> Historical experiment. See the [0.2.0 separate-client results](late-listeners/README.md) and [prepared joining setup](../late-listeners.md) for the implemented feature.
+
 **Research only: no late-listener feature has been merged or deployed.** The accepted design is a server-side mod with a resource pack and unmodified clients. Arriving listeners should join the current part of the song after a short wait, and existing listeners must keep their continuous playback. A client mod is outside scope.
 
 This probe tests a different approach from [repeated sections](late-join-feasibility.md): leave the original full track playing, and send only an arriving listener a single continuous file cropped to a future song position. The probe uses Cat tails beginning at 6 and 12 seconds. It sends ordinary sound packets to prepare each tail inaudibly two seconds before its scheduled start. Preparation is a request, not a client readiness acknowledgement.

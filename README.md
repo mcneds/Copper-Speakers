@@ -48,7 +48,7 @@ Collect copper and a note block to unlock the corresponding recipe-book entries.
 
 ### Through walls
 
-Use a wall plate on a full, solid block to fit sockets on its opposite faces. Wire in front of either face connects through the block. Plate adjoining full blocks to extend the route through thicker walls. The plated block connects to neighboring nodes horizontally at its own height.
+Use a wall plate on a full, solid block to fit sockets on its opposite faces. Wire in front of either face connects through the block. A speaker can sit directly against either socket without a wire segment between them; either the speaker or the plate can be placed first. Plate adjoining full blocks to extend the route through thicker walls. The plated block connects to neighboring nodes horizontally at its own height.
 
 Side clicks select the plate's direction; top or bottom clicks use the player's horizontal facing. Partial blocks, fluids, block entities and speakers cannot host plates. Punch either exposed plate to remove the pair and recover the item in survival.
 
@@ -64,8 +64,9 @@ Every built-in disc works without conversion or special speaker items. Custom di
 
 Built-in songs use buffered audio for closer alignment between speakers. Other songs retain their own audio settings unless their pack provides an optional buffered alias. **Streamed custom songs can have more timing variation** and consume streaming sound channels; playback is supported without claiming sample-accurate synchronization. Pack authors can find the optional buffering format in [Audio compatibility](docs/audio.md).
 
-- Be within **64 blocks of any connected sound source when the disc starts**. You can then walk between that group's speakers while the route stays loaded.
-- Players arriving later or changing dimensions need a fresh disc insertion to join the playback.
+- Players already in the dimension can walk or teleport into range during playback, even if they were far away when the disc started.
+- With [prepared joining audio](docs/late-listeners.md), players who connect later or return from another dimension join the current song position after a short wait. Existing listeners keep playing continuously. This uses ordinary resource packs; no client mod is required.
+- Without prepared audio for that track, a new connection or dimension change still requires a fresh insertion. All normal discs remain playable through speakers.
 - If a speaker was connected at the start, up to **four additional speakers at a time** can join during that track. Disconnecting one of these frees its slot. Further speakers wait for a slot or the next insertion.
 - The first active jukebox owns a connected network. A second disc on that network waits silently and must be ejected and reinserted to start its own group.
 - Copper Speakers does not keep chunks loaded. Unloading the main jukebox ends its session; returning or restarting the game does not resume it.
@@ -91,11 +92,17 @@ With a Java 25 JDK:
 ./gradlew.bat build
 ```
 
-The release jar is `build/libs/copper-speakers-0.1.9.jar`. The build runs graph unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
+The release jar is `build/libs/copper-speakers-0.2.0.jar`. The build runs graph unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
 
 See [Development](docs/development.md) for local launches, client checks and asset generation. Java Edition is the tested target; Bedrock playback through Geyser has not been verified.
 
 ## Benchmarks
+
+The **0.2.0 late-listener benchmark** uses two separate clients and the packaged server mod. It checks late login, entering range, uninterrupted existing sources, speaker attachment, dimension return and independent networks.
+
+![Copper Speakers 0.2.0 late-listener timing](docs/benchmarks/late-listeners/joining.png)
+
+[Measurements, full attempt audit and reproduction instructions](docs/benchmarks/late-listeners/README.md). These are local observations; network and client stalls can increase the difference between listeners.
 
 The **0.1.9 benchmark** exercises actual disc insertion and production playback packets at 3, 8 and 16 sound positions, including the four reserved voices. It compares repeated cold-cache starts and cached replays for a vanilla disc and a synthetic custom disc with a buffered alias.
 

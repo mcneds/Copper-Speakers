@@ -24,7 +24,7 @@ public final class DistancePlaybackTest {
     public void runTest(ClientGameTestContext context) {
         Path output = Path.of(System.getenv().getOrDefault("COPPER_DISTANCE_OUTPUT", "distance.json"));
         report.put("status", "incomplete");
-        report.put("scope", "Functional 96-block distance regression; no synchronization timing claim");
+        report.put("scope", "Player starts outside every source's range, then enters the network; no cross-client synchronization timing claim");
         try {
             // The 96-block route spans seven chunks. A five-chunk client view would
             // legitimately unload its far endpoint and exercise a different lifecycle.
@@ -41,7 +41,7 @@ public final class DistancePlaybackTest {
             try (var server = context.worldBuilder().setUseConsistentSettings(false).adjustSettings(s -> s.setSeed("1")).createServer(properties);
                  var connection = server.connect()) {
                 server.runCommand("gamemode spectator @a");
-                server.runCommand("tp @a 0 91 -2 0 20");
+                server.runCommand("tp @a 256 91 -2 0 20");
                 // Isolate audio range from asynchronous chunk-ticket transitions in
                 // this temporary test world. Production code never adds chunk tickets.
                 server.runCommand("forceload add 0 0 96 0");
@@ -76,7 +76,7 @@ public final class DistancePlaybackTest {
                 var sources = context.computeOnClient(c -> songs(c.level).keySet().stream().map(BlockPos::toShortString).sorted().toList());
                 report.put("clientSourcesAtInsertion", sources);
                 var sound = context.computeOnClient(c -> songs(c.level).get(FAR));
-                if (sound == null) throw new AssertionError("Speaker 96 blocks away received no start while listener was beside master");
+                if (sound == null) throw new AssertionError("Player outside the entire network received no advancing source");
                 context.waitFor(c -> c.getSoundManager().isActive(sound));
                 context.waitTicks(30);
                 double before = offset(context, sound);

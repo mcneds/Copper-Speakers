@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.*;
 public abstract class JukeboxSongPlayerMixin {
     @Shadow @Final private BlockPos blockPos;
     @Shadow private Holder<JukeboxSong> song;
+    @Shadow private long ticksSinceSongStarted;
     @Unique private boolean copperSpeakers$natural;
 
     @WrapOperation(method = "play", at = @At(value = "INVOKE",
@@ -22,6 +23,7 @@ public abstract class JukeboxSongPlayerMixin {
     private void copperSpeakers$start(LevelAccessor level, Entity entity, int event, BlockPos pos, int data, Operation<Void> original) {
         if (!(level instanceof ServerLevel server) || !AudioNetworks.get(server).start(blockPos, song))
             original.call(level, entity, event, pos, data);
+        else ticksSinceSongStarted = -AudioNetworks.get(server).preparationTicks(blockPos);
     }
     @WrapOperation(method = "tick", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/item/JukeboxSongPlayer;stop(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/block/state/BlockState;)V"))

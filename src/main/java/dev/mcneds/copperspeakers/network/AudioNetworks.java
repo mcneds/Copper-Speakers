@@ -7,6 +7,8 @@ import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,11 +40,16 @@ public final class AudioNetworks {
         Set<BlockPos> nodes;
         final Set<BlockPos> sources = new LinkedHashSet<>();
         final Map<UUID, ServerPlayer> listeners = new LinkedHashMap<>();
+        final Map<UUID, PendingListener> pending = new LinkedHashMap<>();
         final Map<BlockPos, SpeakerNotes> notes = new LinkedHashMap<>();
+        TailCatalog.Track track;
+        Component description;
+        long epochNanos;
         SpareVoices voices;
         boolean ended, dirty;
         Session(BlockPos master, Set<BlockPos> nodes) { this.master = master.immutable(); this.nodes = nodes; }
     }
+    private record PendingListener(ServerPlayer player, TailCatalog.Entry entry, long dueNanos, SpareVoices warmup) {}
     private BlockState state(BlockPos pos) {
         return unloaded.contains(ChunkPos.pack(pos)) ? Blocks.AIR.defaultBlockState() : LoadedBlocks.state(level, pos);
     }
@@ -68,6 +75,7 @@ public final class AudioNetworks {
         if (songId < 0) return false;
 
         Session session = new Session(root, graph.nodes());
+        session.description = song.value().description();
         boolean occupied = sessions.values().stream().anyMatch(s -> !s.ended && !s.sources.isEmpty()
                 && !Collections.disjoint(s.nodes, graph.nodes()));
         if (!occupied) {
@@ -79,13 +87,22 @@ public final class AudioNetworks {
         }
         sessions.put(root.immutable(), session);
         if (occupied) return true; // queued discs never auto-start mid-song
+        session.track = TailCatalog.find(level.getServer(), song.value().soundEvent().value().location());
+        if (session.track != null) {
+            TailCatalog.activate(level.getServer(), session, session.track);
+            session.voices = new SpareVoices(session.sources);
+            for (var player : level.players()) if (!TailCatalog.loading(player))
+                prepareListener(session, player, session.track.entries().getFirst());
+            // First-use marker construction/packet serialization can be expensive.
+            // The clients must get the whole preparation window after we send it.
+            session.epochNanos = System.nanoTime() + TailCatalog.PREPARATION_NANOS;
+            reschedulePending(session);
+            return true;
+        }
         session.voices = new SpareVoices();
         for (var player : level.players()) {
-            // Select a listener once for the whole wired group. Distant sources must
-            // already be advancing when that listener later walks into their range.
-            boolean hearsGroup = session.sources.stream().anyMatch(source ->
-                    player.distanceToSqr(source.getX() + .5, source.getY() + .5, source.getZ() + .5) <= 64 * 64);
-            if (!hearsGroup) continue;
+            // An online player can walk or teleport into range later. Start their
+            // sources now; vanilla attenuation keeps distant playback inaudible.
             session.listeners.put(player.getUUID(), player);
             List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>();
             for (BlockPos source : session.sources) {
@@ -96,12 +113,102 @@ public final class AudioNetworks {
         }
         return true;
     }
+    private void prepareListener(Session s, ServerPlayer player, TailCatalog.Entry entry) {
+        var warmup = new SpareVoices(1);
+        List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>();
+        warmup.appendStart(player, entry.sound(), packets);
+        player.connection.send(new ClientboundBundlePacket(packets));
+        long due = s.epochNanos + Math.round(entry.offsetSeconds() * 1_000_000_000);
+        long sent = System.nanoTime();
+        if (entry.offsetSeconds() > 0 && due - sent < TailCatalog.PREPARATION_NANOS) {
+            warmup.destroy(List.of(player));
+            var later = s.track.atOrAfter((sent + TailCatalog.PREPARATION_NANOS - s.epochNanos) / 1_000_000_000.0);
+            if (later != null) prepareListener(s, player, later);
+            return;
+        }
+        s.pending.put(player.getUUID(), new PendingListener(player, entry, due, warmup));
+    }
+    private void advancePrepared(Session s) {
+        long now = System.nanoTime();
+        boolean startedTimeline = false;
+        if (s.listeners.isEmpty() && now - s.epochNanos > 150_000_000L
+                && s.pending.values().stream().anyMatch(p -> p.entry.offsetSeconds() == 0
+                    && p.player.level() == level
+                    && level.getServer().getPlayerList().getPlayer(p.player.getUUID()) == p.player)) {
+            // Nobody has heard the beginning yet, so defer it as a whole instead
+            // of skipping the introduction. Never move an audible session's epoch.
+            s.epochNanos = now;
+            reschedulePending(s);
+        }
+        for (var it = s.pending.values().iterator(); it.hasNext();) {
+            var pending = it.next();
+            var player = pending.player;
+            if (player.level() != level || level.getServer().getPlayerList().getPlayer(player.getUUID()) != player
+                    || TailCatalog.loading(player) || now - pending.dueNanos > 150_000_000L) {
+                pending.warmup.destroy(List.of(player));
+                it.remove();
+                continue;
+            }
+            pending.warmup.keepParkedOutOfEarshot(player);
+            if (now < pending.dueNanos) continue;
+            pending.warmup.destroy(List.of(player));
+            List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>();
+            if (player.distanceToSqr(s.master.getX() + .5, s.master.getY() + .5, s.master.getZ() + .5) < 64 * 64) {
+                // Keep vanilla's nearby-parrot notification without starting a second recording.
+                var registry = level.registryAccess().lookupOrThrow(Registries.JUKEBOX_SONG);
+                registry.get(CopperSpeakers.id("coordinated")).ifPresent(song -> packets.add(
+                        new ClientboundLevelEventPacket(1010, s.master, registry.getId(song.value()), false)));
+                packets.add(new ClientboundSetActionBarTextPacket(
+                        Component.translatable("record.nowPlaying", s.description).withStyle(ChatFormatting.GREEN)));
+            }
+            s.voices.appendStart(player, pending.entry.sound(), packets);
+            long sendTime = System.nanoTime();
+            if (pending.entry.offsetSeconds() == 0 && s.listeners.isEmpty()) {
+                // Packet construction can trigger first-use class loading. Anchor
+                // the timeline to the actual initial send, after that work ends.
+                s.epochNanos = sendTime;
+                startedTimeline = true;
+            } else if (sendTime - pending.dueNanos > 150_000_000L) {
+                // This client's preparation took too long. Try a later entry;
+                // none of these packets have reached them or other listeners.
+                s.voices.forget(player, false);
+                it.remove();
+                continue;
+            }
+            player.connection.send(new ClientboundBundlePacket(packets));
+            s.listeners.put(player.getUUID(), player);
+            it.remove();
+        }
+        if (startedTimeline) reschedulePending(s);
+        for (var player : level.players()) {
+            if (s.listeners.containsKey(player.getUUID()) || s.pending.containsKey(player.getUUID())) continue;
+            if (!TailCatalog.ensureReady(player, s.track)) continue;
+            double earliest = (now + TailCatalog.PREPARATION_NANOS - s.epochNanos) / 1_000_000_000.0;
+            var entry = s.track.atOrAfter(Math.max(0, earliest));
+            if (entry != null) prepareListener(s, player, entry);
+        }
+    }
+    private static void reschedulePending(Session s) {
+        s.pending.replaceAll((uuid, p) -> new PendingListener(p.player, p.entry,
+                s.epochNanos + Math.round(p.entry.offsetSeconds() * 1_000_000_000), p.warmup));
+    }
+    private static void cancelPreparations(Session s) {
+        s.pending.values().forEach(p -> p.warmup.destroy(List.of(p.player)));
+        s.pending.clear();
+    }
+    public int preparationTicks(BlockPos master) {
+        var s = sessions.get(master);
+        return s != null && s.track != null ? (int)(TailCatalog.PREPARATION_NANOS / 50_000_000) : 0;
+    }
     /** Natural completion changes server state, but does not truncate delayed client buffers. */
     public boolean finish(BlockPos master, boolean natural) {
         Session s = sessions.get(master);
         if (s == null) return false;
         if (natural) {
             s.ended = true;
+            TailCatalog.deactivate(level.getServer(), s);
+            if (s.track != null) sendPositionalStop(s, s.master);
+            cancelPreparations(s);
             clearNotes(s);
             if (s.voices != null) s.voices.retireUnused(s.listeners.values());
         } else stop(master);
@@ -110,6 +217,9 @@ public final class AudioNetworks {
     public void stop(BlockPos master) {
         Session s = sessions.remove(master);
         if (s != null) {
+            TailCatalog.deactivate(level.getServer(), s);
+            if (s.track != null) sendPositionalStop(s, s.master);
+            cancelPreparations(s);
             clearNotes(s);
             pruneListeners(s);
             for (BlockPos source : s.sources) if (s.voices == null || s.voices.voiceId(source) == -1)
@@ -215,6 +325,7 @@ public final class AudioNetworks {
         }
         for (Session s : sessions.values()) {
             if (s.ended) continue;
+            if (s.track != null) advancePrepared(s);
             for (BlockPos source : s.sources) {
                 if (source.equals(s.master)) continue;
                 var block = state(source);

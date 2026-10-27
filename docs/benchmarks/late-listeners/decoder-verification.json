@@ -1,0 +1,22 @@
+[
+  {
+    "status": "complete",
+    "decoder": "Minecraft 26.3 JOrbisAudioStream",
+    "verifiedEntries": 843,
+    "maxDecoderLeadInFrames": 448,
+    "scope": "Exact native-decoder frame counts and bit-identical decoded samples after the short Vorbis startup lead-in. No playback timing measurement.",
+    "tracks": 23,
+    "fixture": "22 vanilla discs and one synthetic custom disc",
+    "catalogueSha256": "f852545349a20cb7aa3f7d2294135e3c0ba802c78c0822e588582f1906773665"
+  },
+  {
+    "status": "complete",
+    "decoder": "Minecraft 26.3 JOrbisAudioStream",
+    "verifiedEntries": 853,
+    "maxDecoderLeadInFrames": 448,
+    "scope": "Exact native-decoder frame counts and bit-identical decoded samples after the short Vorbis startup lead-in. No playback timing measurement.",
+    "tracks": 22,
+    "fixture": "22 additional custom recordings; audio and identifiers are not published",
+    "catalogueSha256": "1533c3ecab625e7faeb19fe18a74ce31070b4b0d907a976912f988695f484416"
+  }
+]

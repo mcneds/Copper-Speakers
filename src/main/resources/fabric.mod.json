@@ -28,6 +28,7 @@
     "polymer-core": ">=0.18.4 <0.19.0",
     "polymer-blocks": ">=0.18.4 <0.19.0",
     "polymer-resource-pack": ">=0.18.4 <0.19.0",
+    "polymer-autohost": ">=0.18.4 <0.19.0",
     "polymer-virtual-entity": ">=0.18.4 <0.19.0"
   }
 }

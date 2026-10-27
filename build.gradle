@@ -1,6 +1,6 @@
 plugins { id 'net.fabricmc.fabric-loom' version '1.16.3' }
 group = 'dev.mcneds'
-version = '0.1.9'
+version = '0.2.0'
 base { archivesName = 'copper-speakers' }
 repositories {
     mavenCentral()
@@ -15,6 +15,7 @@ dependencies {
     implementation 'eu.pb4:polymer-blocks:0.18.4+26.3'
     implementation 'eu.pb4:polymer-resource-pack:0.18.4+26.3'
     implementation 'eu.pb4:polymer-virtual-entity:0.18.4+26.3'
+    compileOnly 'eu.pb4:polymer-autohost:0.18.4+26.3'
     runtimeOnly 'maven.modrinth:polymer:G0fTdl8M'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

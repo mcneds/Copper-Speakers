@@ -51,7 +51,9 @@ The late-join test checks native source continuity and shared buffers. Distance,
 
 ## Audio benchmarks
 
-The experimental [late-listener section probe](benchmarks/late-join-feasibility.md) measures boundary timing. The [prepared-tail probe](benchmarks/late-join-tails.md) investigates continuous cropped tracks for arriving listeners. Neither is a production late-joining implementation.
+The experimental [late-listener section probe](benchmarks/late-join-feasibility.md) measured boundary timing. The [prepared-tail probe](benchmarks/late-join-tails.md) investigated continuous cropped tracks; 0.2.0 builds on that approach with production scheduling and per-player pack delivery. See [late-listener setup and verification](late-listeners.md).
+
+`--pretouch-stacks` enables HotSpot's `AlwaysPreTouchStacks` diagnostic option while retaining normal JIT compilation. It works around native shader-related stack-commit faults observed on the Windows test machine. It is a test-runtime setting, not a mod or client requirement. The two-client runner records it explicitly; `--diagnostic` remains functionality-only.
 
 ```powershell
 ./gradlew.bat build prepareRuns
@@ -72,7 +74,7 @@ Polymer generates the combined pack from registered mod assets. `/polymer genera
 python tools/generate-assets.py --minecraft-jar <26.3-client-jar>
 ./tools/prepare-speaker-texture.ps1
 python tools/generate-icon.py --minecraft-jar <26.3-client-jar>
-python tools/check-artifacts.py build/libs/copper-speakers-0.1.9.jar build/run/gameTest/polymer/resource_pack.zip
+python tools/check-artifacts.py build/libs/copper-speakers-0.2.0.jar build/run/gameTest/polymer/resource_pack.zip
 ```
 
 The icon generator requires Pillow. Models reference Minecraft's existing textures; the speaker front is an original hand-authored pixel texture. The artifact audit verifies buffered metadata, expected assets, and exclusion of music and test classes from production.
