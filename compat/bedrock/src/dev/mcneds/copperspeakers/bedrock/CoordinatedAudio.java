@@ -13,6 +13,7 @@ final class CoordinatedAudio {
     interface Scheduler { void later(long milliseconds, Runnable action); }
     interface Output {
         void prepare(Entry entry, float offset);
+        void restartGroup(List<Entry> entries, long now);
         void update(long handle, SoundData event);
     }
     static final class Epoch {
@@ -105,13 +106,15 @@ final class CoordinatedAudio {
     }
     private void release(List<Entry> batch, Epoch epoch, boolean fresh) {
         if (closed) return;
-        if (fresh) epoch.started = now.getAsLong();
+        long releaseTime = now.getAsLong();
+        if (fresh) epoch.started = releaseTime;
         var ready = batch.stream().filter(e -> e.prepared && active.get(e.handle) == e).toList();
-        for (var entry : ready) output.update(entry.handle, new SetVolumeSoundData(entry.volume));
-        for (var entry : ready) {
-            if (fresh) output.update(entry.handle, new ResumeSoundData());
-            entry.released = true;
-        }
+        // Native paused voices can retain different cursors despite receiving the
+        // same seek. Keep the loaded audio, but replace those instances together
+        // at the requested opening instead of relying on their paused state.
+        if (fresh) output.restartGroup(ready, releaseTime);
+        else for (var entry : ready) output.update(entry.handle, new SetVolumeSoundData(entry.volume));
+        for (var entry : ready) entry.released = true;
     }
     String phase(long handle) {
         var entry = active.get(handle);

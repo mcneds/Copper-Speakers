@@ -20,12 +20,22 @@ final class CoordinatedAudioTest {
         final PriorityQueue<Task> tasks = new PriorityQueue<>(Comparator.comparingLong(Task::due).thenComparingLong(Task::order));
         final List<Update> updates = new ArrayList<>();
         final List<CoordinatedAudio.Entry> prepared = new ArrayList<>();
+        final List<Update> restarted = new ArrayList<>();
+        boolean ignoreSeeks;
         final Map<Long, Playback> playback = new HashMap<>();
         final CoordinatedAudio audio = new CoordinatedAudio(() -> now,
                 (delay, action) -> tasks.add(new Task(now + delay * 1_000_000L, order++, action)),
                 new CoordinatedAudio.Output() {
                     public void prepare(CoordinatedAudio.Entry entry, float offset) {
                         prepared.add(entry); playback.put(entry.handle, new Playback(offset, now));
+                    }
+                    public void restartGroup(List<CoordinatedAudio.Entry> entries, long releaseTime) {
+                        for (var entry : entries) update(entry.handle, new StopSoundData());
+                        for (var entry : entries) {
+                            float offset = entry.clock.position(releaseTime);
+                            playback.put(entry.handle, new Playback(offset, now));
+                            restarted.add(new Update(entry.handle, new SeekToSoundData(offset), now));
+                        }
                     }
                     public void update(long handle, SoundData event) {
                         updates.add(new Update(handle, event, now));
@@ -35,7 +45,7 @@ final class CoordinatedAudioTest {
                         voice.seconds = voice.position(now); voice.changed = now;
                         if (event instanceof PauseSoundData) voice.running = false;
                         if (event instanceof ResumeSoundData) voice.running = true;
-                        if (event instanceof SeekToSoundData seek) voice.seconds = seek.getSeconds();
+                        if (!ignoreSeeks && event instanceof SeekToSoundData seek) voice.seconds = seek.getSeconds();
                     }
                 });
         CoordinatedAudio.Clock start(long handle, float offset, boolean audible) {
@@ -63,17 +73,16 @@ final class CoordinatedAudioTest {
         check(a.epoch == b.epoch && a.epoch == spare.epoch, "Audible and parked sources share one epoch");
         check(f.type(SeekToSoundData.class).stream().allMatch(u -> ((SeekToSoundData)u.event).getSeconds() == 15),
                 "Initial release preserves the requested opening position");
-        check(f.type(ResumeSoundData.class).size() == 2 && f.type(ResumeSoundData.class).stream().allMatch(u -> u.at == f.now),
-                "All prepared sources resume on one scheduler turn");
-        check(f.updates.get(f.updates.size() - 1).event instanceof ResumeSoundData,
-                "Seek and volume updates precede every resume");
+        check(f.restarted.size() == 2 && f.restarted.stream().allMatch(u -> u.at == f.now),
+                "All prepared sources are recreated on one scheduler turn");
+        check(f.type(ResumeSoundData.class).isEmpty(), "Fresh starts must not depend on resuming paused instances");
         f.until(release + 5000);
         f.audio.start(3, "record.cat", Vector3f.ZERO, 4, 1, spare, true);
         f.until(release + 5000 + release);
         var late = f.type(SeekToSoundData.class).stream().filter(u -> u.handle == 3).findFirst().orElseThrow();
         check(Math.abs(((SeekToSoundData)late.event).getSeconds() - (20 + (release - CoordinatedAudio.SETTLE_MS) / 1000f)) < .001,
                 "A newly attached speaker joins the current clock before settling silently");
-        check(f.type(ResumeSoundData.class).stream().filter(u -> u.handle == 1 || u.handle == 2).count() == 2,
+        check(f.type(ResumeSoundData.class).stream().filter(u -> u.handle == 1 || u.handle == 2).count() == 0,
                 "Attaching a speaker must never pause or resume existing sources");
         check(f.updates.stream().noneMatch(u -> u.handle != 3 && u.at > release * 1_000_000L),
                 "Attaching a speaker must not send any updates to existing handles");
@@ -81,30 +90,30 @@ final class CoordinatedAudioTest {
                 "Existing song clocks continue uninterrupted during attachment");
 
         var stopped = new Fixture(); stopped.start(1, 0, true); stopped.until(100); stopped.audio.stop(1); stopped.until(release + 10);
-        check(stopped.type(StopSoundData.class).size() == 1 && stopped.type(ResumeSoundData.class).isEmpty(),
+        check(stopped.type(StopSoundData.class).size() == 1 && stopped.restarted.isEmpty(),
                 "Ejection during preparation cancels release");
         var seeking = new Fixture(); seeking.start(1, 0, true);
         seeking.until(CoordinatedAudio.BATCH_MS + CoordinatedAudio.PREPARATION_MS);
         check(seeking.type(SeekToSoundData.class).size() == 1 && seeking.type(ResumeSoundData.class).isEmpty(),
                 "Seeking happens while the source is still paused");
         seeking.audio.stop(1); seeking.until(release + 10);
-        check(seeking.type(ResumeSoundData.class).isEmpty(), "Ejection while seeking must not revive the source");
+        check(seeking.restarted.isEmpty(), "Ejection while seeking must not revive the source");
         var replaced = new Fixture(); replaced.start(1, 0, true); replaced.until(100); replaced.start(1, 10, true);
-        replaced.until(release); check(replaced.type(ResumeSoundData.class).isEmpty(), "Stale callback cannot release a replacement");
+        replaced.until(release); check(replaced.restarted.isEmpty(), "Stale callback cannot release a replacement");
         replaced.until(release + 100);
-        check(replaced.type(ResumeSoundData.class).size() == 1 && replaced.type(SeekToSoundData.class).stream()
+        check(replaced.restarted.size() == 1 && replaced.type(SeekToSoundData.class).stream()
                 .allMatch(u -> ((SeekToSoundData)u.event).getSeconds() == 10), "Only the replacement begins");
         var disconnected = new Fixture(); disconnected.start(1, 0, true); disconnected.until(100);
         int before = disconnected.updates.size(); disconnected.audio.close(); disconnected.until(release + 10);
         check(disconnected.updates.size() == before, "Disconnect cancels delayed audio actions");
         var rejoined = new Fixture(); rejoined.start(1, 0, true); rejoined.until(release);
-        check(rejoined.type(ResumeSoundData.class).size() == 1, "A new connection receives preparation normally");
+        check(rejoined.restarted.size() == 1, "A new connection receives preparation normally");
         var overlap = new Fixture(); var shared = overlap.start(1, 0, true); overlap.until(release + 1000);
         overlap.audio.start(2, "record.cat", Vector3f.ZERO, 4, 1, shared, true);
         overlap.until(release + 1100);
         overlap.audio.start(3, "record.cat", Vector3f.ZERO, 4, 1, shared, true);
         overlap.until(2 * release + 1100);
-        check(overlap.type(ResumeSoundData.class).size() == 3,
+        check(overlap.restarted.size() == 1 && overlap.type(ResumeSoundData.class).size() == 2,
                 "Overlapping late preparations release only their new sources");
         check(overlap.type(PauseSoundData.class).stream().filter(u -> u.handle == 1).count() == 1,
                 "Overlapping attachments cannot pause an existing speaker");
@@ -118,9 +127,27 @@ final class CoordinatedAudioTest {
         var second = independent.start(2, 0, true); independent.until(2 * release + 1000);
         check(first.epoch != second.epoch && first.position(independent.now) > 3 && second.position(independent.now) == 0,
                 "Independent starts retain separate timelines");
+        unreliablePausedVoices(release);
         delayedAttachmentRelease(release);
         stoppedSilentAttachment(release);
         System.out.println("PASS: coordinated starts, intro preservation, late attachment, ejection, replacement, disconnect/rejoin, and independent clocks");
+    }
+
+    private static void unreliablePausedVoices(long release) {
+        var f = new Fixture();
+        f.ignoreSeeks = true;
+        for (int i = 1; i <= 24; i++) f.start(i, 15, true);
+        f.until(CoordinatedAudio.BATCH_MS);
+        // Model the measured failure: prepared native voices have different
+        // cursors, and seeking those paused instances does not correct them.
+        for (var entry : f.playback.entrySet()) entry.getValue().seconds += entry.getKey() / 10f;
+        f.audio.stop(24);
+        f.until(release);
+        check(f.restarted.size() == 23 && !f.playback.containsKey(24L),
+                "Recreation excludes an ejected source");
+        check(f.playback.values().stream().allMatch(v -> v.running && v.position(f.now) == 15),
+                "A fresh cohort starts at its requested opening even when paused seeks fail");
+        check(f.type(ResumeSoundData.class).isEmpty(), "Broken paused instances are never resumed");
     }
 
     private static void delayedAttachmentRelease(long release) {

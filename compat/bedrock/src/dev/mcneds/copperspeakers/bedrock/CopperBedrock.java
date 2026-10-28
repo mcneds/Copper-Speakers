@@ -2,6 +2,8 @@ package dev.mcneds.copperspeakers.bedrock;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.nio.file.Path;
 import java.nio.file.Files;
@@ -91,9 +93,16 @@ public final class CopperBedrock implements Extension {
                         @Override public void prepare(CoordinatedAudio.Entry entry, float offset) {
                             play(session, entry.sound, entry.position, 0, entry.pitch, entry.handle, offset);
                         }
+                        @Override public void restartGroup(List<CoordinatedAudio.Entry> entries, long now) {
+                            var packets = new ArrayList<org.geysermc.geyser.shaded.org.cloudburstmc.protocol.bedrock.packet.BedrockPacket>();
+                            for (var entry : entries) packets.add(stopPacket(entry.handle));
+                            for (var entry : entries) packets.add(playPacket(entry.sound, entry.position,
+                                    entry.volume, entry.pitch, entry.handle, entry.clock.position(now)));
+                            sendAudio(session, packets);
+                        }
                         @Override public void update(long handle, org.geysermc.geyser.shaded.org.cloudburstmc.protocol.bedrock.data.sound.SoundData event) {
                             var packet = new ClientboundUpdateSoundDataPacket();
-                            packet.setServerSoundHandle(handle); packet.setEvent(event); session.sendUpstreamPacket(packet);
+                            packet.setServerSoundHandle(handle); packet.setEvent(event); sendAudio(session, List.of(packet));
                         }
                     });
         }
@@ -331,11 +340,16 @@ public final class CopperBedrock implements Extension {
     }
 
     private static void stop(GeyserSession session, long handle) {
-        session.sendUpstreamPacket(stopPacket(handle));
+        sendAudio(session, List.of(stopPacket(handle)));
     }
 
     private static void play(GeyserSession session, String sound, Vector3f position, float volume,
                              float pitch, long handle, float offset) {
+        sendAudio(session, List.of(playPacket(sound, position, volume, pitch, handle, offset)));
+    }
+
+    private static PlaySoundPacket playPacket(String sound, Vector3f position, float volume,
+                                              float pitch, long handle, float offset) {
         var packet = new PlaySoundPacket();
         packet.setSound(sound);
         packet.setPosition(position);
@@ -344,6 +358,18 @@ public final class CopperBedrock implements Extension {
         packet.setServerSoundHandle(handle);
         packet.setBypassListenerRangeCheck(true);
         packet.setPlaybackPositionSeconds(offset);
-        session.sendUpstreamPacket(packet);
+        return packet;
+    }
+
+    private static void sendAudio(GeyserSession session,
+                                  List<? extends org.geysermc.geyser.shaded.org.cloudburstmc.protocol.bedrock.packet.BedrockPacket> packets) {
+        if (packets.isEmpty()) return;
+        var upstream = session.getUpstream().getSession();
+        // Enqueue each group on the transport loop in one turn, so its flush
+        // cannot drain a partially submitted group. Stops use this same queue
+        // and therefore remain ordered after an already submitted restart.
+        upstream.getPeer().getChannel().eventLoop().execute(() -> {
+            for (var packet : packets) upstream.sendPacket(packet);
+        });
     }
 }

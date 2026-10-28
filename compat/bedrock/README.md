@@ -1,8 +1,8 @@
 # Bedrock compatibility
 
-## Download and install 0.3.1
+## Download and install 0.3.2
 
-Download [`copper-speakers-0.3.1-bedrock-fabric.zip`](https://github.com/mcneds/Copper-Speakers/releases/download/v0.3.1/copper-speakers-0.3.1-bedrock-fabric.zip) from [Copper Speakers 0.3.1](https://github.com/mcneds/Copper-Speakers/releases/tag/v0.3.1). This is the complete Fabric/Geyser compatibility bundle, including the Java mod. The standalone `copper-speakers-0.3.1.jar` is sufficient for Java players; Bedrock players also need the extensions, packs and mappings in the ZIP.
+Download [`copper-speakers-0.3.2-bedrock-fabric.zip`](https://github.com/mcneds/Copper-Speakers/releases/download/v0.3.2/copper-speakers-0.3.2-bedrock-fabric.zip) from [Copper Speakers 0.3.2](https://github.com/mcneds/Copper-Speakers/releases/tag/v0.3.2). This is the complete Fabric/Geyser compatibility bundle, including the Java mod. The standalone `copper-speakers-0.3.2.jar` is sufficient for Java players; Bedrock players also need the extensions, packs and mappings in the ZIP.
 
 The **Bedrock Fabric bundle** is built with the Java mod for every release. It contains:
 
@@ -20,7 +20,7 @@ Install matching Fabric API, Polymer and Geyser-Fabric separately. Follow the in
 
 | Bundle location | Install into the server |
 | --- | --- |
-| `mods/copper-speakers-0.3.1.jar` | `mods/` |
+| `mods/copper-speakers-0.3.2.jar` | `mods/` |
 | `config/Geyser-Fabric/extensions/*.jar` | Both CopperBedrock and the patched GeyserDisplayEntity in the same extensions folder |
 | `config/Geyser-Fabric/packs/*.mcpack` | Both matching packs in the same packs folder |
 | `config/Geyser-Fabric/custom_mappings/*.json` | Both block and item mappings in the same custom_mappings folder |
@@ -76,8 +76,10 @@ On a dedicated server, operators can use `/copperspeakers sync enable <sound>`, 
 
 The build runs the exact supported Bedrock codec through stop, seek, volume, pause/resume and offset round trips; coordination tests exercise continuous listeners, attachment, replacement and disconnects. Visual tests verify geometry/UV conversion, face rotations, empty carriers and preservation of unrelated displays. Bundle audits check matching versions, file layout and source/license inclusion.
 
+A controlled Windows Bedrock 26.60 test of the 0.3.2 startup path used 24 simultaneous voices and two custom recordings. The all-source recordings were coherent, and the sampled voice pairs measured below the 1 ms reporting resolution, including a fresh-client run and a repeat. This is evidence for that client and workload, not a timing guarantee for every device. A late-attachment sample measured approximately 1.7 ms. The analyser also checks known synthetic offsets; invalid capture windows are excluded.
+
 These automated checks do not measure physical Bedrock client timing or prove rendering on other protocols. Check playback, range entry, attachment, stopping, wires, plates and particles in game after installation. Java timing benchmarks apply to Java clients.
 
-For a new speaker joining an active track, CopperBedrock prepares it muted, seeks to the current song position, then lets it advance silently while the audio settles. The final callback only restores its volume. This prevents a delayed callback from leaving the newcomer at an outdated predicted position. Initial starts still remain paused until their common release to preserve the opening. Coordination tests include a delayed callback and cancellation during silent settling; these check the scheduling behavior, not client audio latency.
+For a new speaker joining an active track, CopperBedrock prepares it muted, seeks to the current song position, then lets it advance silently while the audio settles. The final callback only restores its volume. This prevents a delayed callback from leaving the newcomer at an outdated predicted position. For an initial start, the muted instances load the audio, then CopperBedrock stops and recreates the audible group at its shared opening position. It submits that group on the transport event loop in one turn, preserving packet order for subsequent stops. This avoids relying on paused native instances retaining a common cursor after seeking. Late attachments retain the existing song clock and do not recreate already-playing speakers. Coordination tests include failed seeks on paused instances, a delayed callback and cancellation during silent settling; these check lifecycle behavior, not client audio latency.
 
 GeyserDisplayEntity is [upstream AGPL-3.0 source](https://github.com/GeyserExtensionists/GeyserDisplayEntity). The release includes its complete patched source tree, license, patch inputs and portable rebuild recipe. Copper Speakers and CopperBedrock are MIT licensed. See [release maintenance](../../docs/releases.md) for changing versions and dependency pins.
