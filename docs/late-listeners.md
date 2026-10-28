@@ -6,6 +6,8 @@ Players already in the dimension receive playback at insertion, including player
 
 Players connecting after insertion or returning from another dimension need prepared joining audio for the track. They wait for their packs to finish loading, then normally another **3–18 seconds** with the default settings. They start at a future point on the existing song timeline. The other listeners receive no restart, stop, or resource-pack refresh.
 
+Bedrock also prepares its native decoders after admission. For a nonzero start this includes a silent running seek before the sources become audible together; allow about 3.5 seconds beyond the server's admission time. Preparation has no loading or joining action-bar countdown.
+
 ## Per-song control while the server runs
 
 Operators with permission level 3 or higher can control reconnect synchronization in chat or from the server console:

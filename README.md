@@ -16,7 +16,7 @@ Download these **three separate mod jars** for the `mods` folder:
 
 | Mod | Required version |
 | --- | --- |
-| **Copper Speakers** | **0.3.4** for Minecraft **26.3** |
+| **Copper Speakers** | **0.3.5** for Minecraft **26.3** |
 | **Fabric API** | A release for Minecraft **26.3**; this project builds against **0.163.0+26.3** |
 | **Polymer bundle** | **0.18.4 or a later 0.18.x release** for Minecraft **26.3** |
 
@@ -116,7 +116,7 @@ With a Java 25 JDK:
 ./gradlew.bat build
 ```
 
-The release jar is `build/libs/copper-speakers-0.3.4.jar`. The build runs unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
+The release jar is `build/libs/copper-speakers-0.3.5.jar`. The build runs unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
 
 To build the Java mod and the full Bedrock release bundle together, run `./gradlew releaseBundle` after installing the [build dependencies](docs/releases.md). CI runs this same command for pull requests, main-branch changes and release tags.
 

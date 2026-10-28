@@ -99,16 +99,23 @@ public final class CopperBedrock implements Extension {
                         @Override public void prepare(CoordinatedAudio.Entry entry, float offset) {
                             play(session, entry.sound, entry.position, 0, entry.pitch, entry.handle, offset);
                         }
-                        @Override public void restartGroup(List<CoordinatedAudio.Entry> entries, long now) {
+                        @Override public void restartGroup(List<CoordinatedAudio.Entry> entries, long now, boolean muted) {
                             var packets = new ArrayList<org.geysermc.geyser.shaded.org.cloudburstmc.protocol.bedrock.packet.BedrockPacket>();
                             for (var entry : entries) packets.add(stopPacket(entry.handle));
                             for (var entry : entries) packets.add(playPacket(entry.sound, entry.position,
-                                    entry.volume, entry.pitch, entry.handle, entry.clock.position(now)));
+                                    muted ? 0 : entry.volume, entry.pitch, entry.handle, entry.clock.position(now)));
                             sendAudio(session, packets);
                         }
                         @Override public void update(long handle, org.geysermc.geyser.shaded.org.cloudburstmc.protocol.bedrock.data.sound.SoundData event) {
-                            var packet = new ClientboundUpdateSoundDataPacket();
-                            packet.setServerSoundHandle(handle); packet.setEvent(event); sendAudio(session, List.of(packet));
+                            updateGroup(List.of(new CoordinatedAudio.Update(handle, event)));
+                        }
+                        @Override public void updateGroup(List<CoordinatedAudio.Update> updates) {
+                            var packets = new ArrayList<ClientboundUpdateSoundDataPacket>();
+                            for (var update : updates) {
+                                var packet = new ClientboundUpdateSoundDataPacket();
+                                packet.setServerSoundHandle(update.handle()); packet.setEvent(update.event()); packets.add(packet);
+                            }
+                            sendAudio(session, packets);
                         }
                     });
         }

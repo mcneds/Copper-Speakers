@@ -66,7 +66,7 @@ Settings changes cancel obsolete jobs. A completion for an obsolete revision can
 
 `ready` means prepared audio is registered for the **next insertion**. An ordinary playing session has no dependable shared audio clock, so enabling cannot safely turn it into a prepared session. Its listeners continue without interruption. Eject/reinsert when you want the new behavior. Disabling and re-enabling admissions for an already prepared session can take effect during that session, using the prepared version it started with; replacing a recording or spacing uses the new version on the next insertion.
 
-Joining runs silently during pack loading and scheduled admission. Loading and countdown messages are not sent to the action bar. A nearby listener receives the normal song title when playback begins. Only the joining player's packs and warmup change; existing listeners retain their continuous sources. The default joining wait after packs load is approximately 3–18 seconds, depending on the next actual Vorbis entry point and server/client delays.
+Joining runs silently during pack loading and scheduled admission. Loading and countdown messages are not sent to the action bar. A nearby listener receives the normal song title when playback begins. Only the joining player's packs and warmup change; existing listeners retain their continuous sources. The default joining wait after packs load is approximately 3â€“18 seconds, depending on the next actual Vorbis entry point and server/client delays.
 
 ## Status
 
@@ -102,7 +102,7 @@ New prepared sound IDs are self-describing:
 copper_speakers:tail/v1/<original-sound-utf8-hex>/<source-sha256-first-24>/<sample-rate>/<offset-frames>
 ```
 
-The extension resolves the original event and `offsetFrames / sampleRate` directly, then uses its existing buffered sound mapping and Bedrock playback-position support. It never needs Java suffix audio. This avoids a race between live registration and mapping refresh. Legacy opaque IDs also resolve through `events.json`, which is replaced atomically and loaded on a background thread once per second. Its format is:
+The extension resolves the original event and `offsetFrames / sampleRate` directly, then uses its buffered sound mapping and Bedrock playback-position support. Nonzero starts reopen muted, seek while running, and unmute together so a dimension return resumes at the current position. It never needs Java suffix audio. This avoids a race between live registration and mapping refresh. Legacy opaque IDs also resolve through `events.json`, which is replaced atomically and loaded on a background thread once per second. Its format is:
 
 ```json
 {"format":1,"events":{"copper_speakers:tail/opaque/123":{"sound":"example:original","offsetSeconds":15.25}}}

@@ -1,8 +1,8 @@
 # Bedrock compatibility
 
-## Download and install 0.3.4
+## Download and install 0.3.5
 
-Download [`copper-speakers-0.3.4-bedrock-fabric.zip`](https://github.com/mcneds/Copper-Speakers/releases/download/v0.3.4/copper-speakers-0.3.4-bedrock-fabric.zip) from [Copper Speakers 0.3.4](https://github.com/mcneds/Copper-Speakers/releases/tag/v0.3.4). This is the complete Fabric/Geyser compatibility bundle, including the Java mod. The standalone `copper-speakers-0.3.4.jar` is sufficient for Java players; Bedrock players also need the extensions, packs and mappings in the ZIP.
+Download [`copper-speakers-0.3.5-bedrock-fabric.zip`](https://github.com/mcneds/Copper-Speakers/releases/download/v0.3.5/copper-speakers-0.3.5-bedrock-fabric.zip) from [Copper Speakers 0.3.5](https://github.com/mcneds/Copper-Speakers/releases/tag/v0.3.5). This is the complete Fabric/Geyser compatibility bundle, including the Java mod. The standalone `copper-speakers-0.3.5.jar` is sufficient for Java players; Bedrock players also need the extensions, packs and mappings in the ZIP.
 
 The **Bedrock Fabric bundle** is built with the Java mod for every release. It contains:
 
@@ -20,7 +20,7 @@ Install matching Fabric API, Polymer and Geyser-Fabric separately. Follow the in
 
 | Bundle location | Install into the server |
 | --- | --- |
-| `mods/copper-speakers-0.3.4.jar` | `mods/` |
+| `mods/copper-speakers-0.3.5.jar` | `mods/` |
 | `config/Geyser-Fabric/extensions/*.jar` | Both CopperBedrock and the patched GeyserDisplayEntity in the same extensions folder |
 | `config/Geyser-Fabric/packs/*.mcpack` | Both matching packs in the same packs folder |
 | `config/Geyser-Fabric/custom_mappings/*.json` | Both block and item mappings in the same custom_mappings folder |
@@ -32,6 +32,8 @@ Use the extensions, packs and mappings from the same bundle. The release's `SHA2
 The supported target is Java **26.3**, Java runtime **25**, Geyser-Fabric **2.12.1 build 1273**, and Bedrock **26.60 / protocol 2225**. Dependency URLs, checksums and the display source commit are in [dependencies.lock.json](dependencies.lock.json). Other Geyser builds need recompilation and protocol/client checks because this integration uses internal APIs.
 
 CopperBedrock translates entity-bound audio anchors into Bedrock sound handles. It preserves current song positions when a spare voice moves to a speaker and uses original audio plus playback offsets for prepared late joins. New prepared events are self-describing; legacy events can be refreshed from the [runtime mapping file](../../docs/prepared-joining.md). Adding a song does not require rebuilding the extension.
+
+Prepared starts at a nonzero position reopen silently, seek the running voices to their shared clock, and unmute as one ordered group. This handles native Bedrock losing the opening offset after a dimension change. Playback from the beginning keeps the coordinated startup introduced in 0.3.2. Ejection, replacement and disconnect cancel pending seeks and unmutes.
 
 The visual converter preserves the supplied Java pack's models and allocated states. The display fork renders Copper meshes and note particles while retaining upstream behavior for other displays. Wall plates retain their frame IDs and orientation. A scoped protocol-2225 hook supplies empty/unit-cube voxel shapes only when Geyser sends an empty registry.
 
@@ -78,7 +80,7 @@ On a dedicated server, operators can use `/copperspeakers sync enable <sound>`, 
 
 ## Verification and source
 
-Speaker geometry uses Bedrock yaw opposite to Java blockstate yaw. Version 0.3.4 corrects the north/south fronts while preserving east/west. The visual regression checks the driver face normal in all four directions; the previous converter fails the north-facing case. A client-only projection of the corrected states was also checked against the actual Java block facings.
+Speaker geometry uses Bedrock yaw opposite to Java blockstate yaw. Version 0.3.5 corrects the north/south fronts while preserving east/west. The visual regression checks the driver face normal in all four directions; the previous converter fails the north-facing case. A client-only projection of the corrected states was also checked against the actual Java block facings.
 
 The build runs the exact supported Bedrock codec through stop, seek, volume, pause/resume and offset round trips; coordination tests exercise continuous listeners, attachment, replacement and disconnects. Visual tests verify geometry/UV conversion, face rotations, empty carriers and preservation of unrelated displays. Bundle audits check matching versions, file layout and source/license inclusion.
 

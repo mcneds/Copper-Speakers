@@ -10,11 +10,16 @@ final class CoordinatedAudio {
     static final long PREPARATION_MS = 2000;
     static final long SETTLE_MS = 250;
     static final long BATCH_MS = 25;
+    static final long RUNNING_SEEK_MS = 1000;
     interface Scheduler { void later(long milliseconds, Runnable action); }
+    record Update(long handle, SoundData event) {}
     interface Output {
         void prepare(Entry entry, float offset);
-        void restartGroup(List<Entry> entries, long now);
+        void restartGroup(List<Entry> entries, long now, boolean muted);
         void update(long handle, SoundData event);
+        default void updateGroup(List<Update> updates) {
+            for (var update : updates) update(update.handle(), update.event());
+        }
     }
     static final class Epoch {
         long started;
@@ -112,9 +117,38 @@ final class CoordinatedAudio {
         // Native paused voices can retain different cursors despite receiving the
         // same seek. Keep the loaded audio, but replace those instances together
         // at the requested opening instead of relying on their paused state.
-        if (fresh) output.restartGroup(ready, releaseTime);
+        if (fresh) {
+            boolean nonzero = ready.stream().anyMatch(e -> e.clock.offset > 0);
+            output.restartGroup(ready, releaseTime, nonzero);
+            if (nonzero) {
+                // After a dimension change the native engine can reopen at zero
+                // despite PlaySound's nonzero position. Let the new voices run
+                // silently, seek that running group, then expose it together.
+                scheduler.later(RUNNING_SEEK_MS, () -> seekRunning(ready));
+                return;
+            }
+        }
         else for (var entry : ready) output.update(entry.handle, new SetVolumeSoundData(entry.volume));
         for (var entry : ready) entry.released = true;
+    }
+    private List<Entry> current(List<Entry> entries) {
+        return entries.stream().filter(e -> active.get(e.handle) == e).toList();
+    }
+    private void seekRunning(List<Entry> entries) {
+        if (closed) return;
+        var ready = current(entries);
+        long seekTime = now.getAsLong();
+        output.updateGroup(ready.stream().map(e -> new Update(e.handle,
+                new SeekToSoundData(e.clock.position(seekTime)))).toList());
+        // Running voices advance during settling, including when the unmute
+        // callback is delayed. Neither callback changes the shared epoch.
+        scheduler.later(SETTLE_MS, () -> {
+            if (closed) return;
+            var audible = current(ready);
+            output.updateGroup(audible.stream().map(e -> new Update(e.handle,
+                    new SetVolumeSoundData(e.volume))).toList());
+            for (var entry : audible) entry.released = true;
+        });
     }
     String phase(long handle) {
         var entry = active.get(handle);
