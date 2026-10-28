@@ -29,12 +29,15 @@ def main():
     parser.add_argument('--pretouch-stacks', action='store_true')
     parser.add_argument('--sound', help='Catalogue sound event to exercise as a normal custom jukebox song')
     parser.add_argument('--live-source', type=Path, help='Start without a catalogue, enable this source live, then test disable and deferred deletion')
+    parser.add_argument('--managed-catalog', action='store_true', help='Recover a single-song catalogue through the per-song controller before login')
     parser.add_argument('--extended', action='store_true', help='Also check independent groups, cancelled warmup and dimension return')
     parser.add_argument('--packaged', action='store_true', help='Run the dedicated server from the built release jar')
     parser.add_argument('--vanilla-smoke', action='store_true', help='After timing checks, run an untouched client and measure only its Windows audio-session peak')
     parser.add_argument('--client-heap', default='2G', choices=['768M', '1G', '2G'])
     parser.add_argument('--server-heap', default='2G', choices=['512M', '768M', '1G', '2G'])
     args = parser.parse_args()
+    if args.managed_catalog and args.live_source:
+        parser.error('--managed-catalog cannot be combined with --live-source')
     if not args.name.replace('-', '').isalnum():
         parser.error('Use letters, numbers and hyphens for the attempt name')
     for port in (28901, 28902):
@@ -50,7 +53,19 @@ def main():
         'enable-rcon=true\nrcon.port=28902\nrcon.password=copper-local-development\nwhite-list=false\n'
         'gamemode=spectator\nforce-gamemode=true\nallow-flight=true\nspawn-protection=0\n'
         'view-distance=4\nsimulation-distance=4\nlevel-seed=1\n')
-    if not args.live_source:
+    if args.managed_catalog:
+        catalogue = json.loads((args.catalog / 'catalog.json').read_text(encoding="utf-8"))
+        if len(catalogue['tracks']) != 1:
+            parser.error('--managed-catalog requires a single-song catalogue')
+        sound = next(iter(catalogue['tracks']))
+        joining = work / 'config/copper-speakers/joining'
+        generation = joining / 'songs/login-fixture'
+        shutil.copytree(args.catalog.resolve(), generation)
+        setting = {'revision': 'login-fixture', 'enabled': True,
+                   'spacingSeconds': catalogue.get('spacingSeconds', 15), 'deletePrepared': False}
+        (generation / 'request.json').write_text(json.dumps({'sound': sound, 'setting': setting, 'sourceSha256': ''}))
+        (joining / 'settings.json').write_text(json.dumps({'format': 1, 'tracks': {sound: setting}}))
+    elif not args.live_source:
         shutil.copytree(args.catalog.resolve(), work / 'config/copper-speakers/tails')
     item = 'minecraft:music_disc_cat'
     if args.sound:
@@ -244,6 +259,15 @@ def main():
                 raise RuntimeError('Observer failed')
         reports = {r: json.loads((ROOT / 'build/validation' / (args.name + '-' + r) / 'observe.json').read_text(encoding="utf-8")) for r in ('a', 'b')}
         assert all(r['status'] == 'complete' for r in reports.values())
+        if not args.live_source:
+            catalogue = json.loads((args.catalog / 'catalog.json').read_text(encoding="utf-8"))
+            expected_events = {entry['event'] for track in catalogue['tracks'].values() for entry in track['entries']}
+            for role, report in reports.items():
+                missing = expected_events - set(report['preparedEventsAtLogin'])
+                assert not missing, f'Client {role} entered gameplay without prepared audio: {sorted(missing)}'
+                assert not any(frame['preparedAudioReloaded'] for frame in report['observations']), f'Client {role} reloaded prepared audio during gameplay'
+            result['preparedAudioLoadedAtLogin'] = True
+            result['noGameplayResourceReload'] = True
         assert all(any(abs(s['x'] - 4.5) < .01 and abs(s['z'] - .5) < .01
                        for f in report['observations'] for s in f['sounds']) for report in reports.values()), 'Late speaker was not connected and playing'
         result['lateSpeakerPlayedForBothClients'] = True

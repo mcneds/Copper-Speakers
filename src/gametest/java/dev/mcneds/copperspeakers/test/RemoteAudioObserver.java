@@ -17,6 +17,7 @@ import java.util.concurrent.*;
 public final class RemoteAudioObserver {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final Map<String,Object> report = new LinkedHashMap<>();
+    private final Map<net.minecraft.resources.Identifier, WeighedSoundEvents> loginPreparedEvents = new HashMap<>();
     private record SoundHandle(String event, double x, double y, double z, ChannelAccess.ChannelHandle handle) {}
     public void runTest(ClientGameTestContext context) {
         Path output = Path.of(System.getenv("COPPER_OBSERVE_OUTPUT"));
@@ -70,6 +71,14 @@ public final class RemoteAudioObserver {
                 return c.level != null && c.player != null && c.getConnection() != null;
             }, 6000);
             context.waitTicks(20);
+            report.put("preparedEventsAtLogin", context.computeOnClient(c -> {
+                for (var event : offsets.keySet()) {
+                    var id = net.minecraft.resources.Identifier.parse(event);
+                    var definition = c.getSoundManager().getSoundEvent(id);
+                    if (definition != null) loginPreparedEvents.put(id, definition);
+                }
+                return loginPreparedEvents.keySet().stream().map(Object::toString).sorted().toList();
+            }));
             Files.writeString(control.resolve(role + ".connected"), context.computeOnClient(c -> c.getUser().getName()));
             long deadline = System.nanoTime() + TimeUnit.MINUTES.toNanos(8);
             while (!Files.exists(control.resolve("stop"))) {
@@ -94,6 +103,8 @@ public final class RemoteAudioObserver {
                     .map(e -> new SoundHandle(e.getKey().getIdentifier().toString(), e.getKey().getX(), e.getKey().getY(), e.getKey().getZ(), e.getValue())).toList();
             var frame = new LinkedHashMap<String,Object>();
             frame.put("hostNanos", System.nanoTime());
+            frame.put("preparedAudioReloaded", loginPreparedEvents.entrySet().stream()
+                    .anyMatch(e -> c.getSoundManager().getSoundEvent(e.getKey()) != e.getValue()));
             frame.put("playerX", c.player == null ? null : c.player.getX());
             frame.put("dimension", c.level == null ? null : c.level.dimension().identifier().toString());
             net.minecraft.network.chat.Component message = field(c.gui.hud, "overlayMessageString");

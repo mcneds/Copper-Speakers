@@ -66,7 +66,7 @@ Settings changes cancel obsolete jobs. A completion for an obsolete revision can
 
 `ready` means prepared audio is registered for the **next insertion**. An ordinary playing session has no dependable shared audio clock, so enabling cannot safely turn it into a prepared session. Its listeners continue without interruption. Eject/reinsert when you want the new behavior. Disabling and re-enabling admissions for an already prepared session can take effect during that session, using the prepared version it started with; replacing a recording or spacing uses the new version on the next insertion.
 
-Joining runs silently during pack loading and scheduled admission. Loading and countdown messages are not sent to the action bar. A nearby listener receives the normal song title when playback begins. Only the joining player's packs and warmup change; existing listeners retain their continuous sources. The default joining wait after packs load is approximately 3–18 seconds, depending on the next actual Vorbis entry point and server/client delays.
+Enabled prepared songs are sent with the login resource packs, so first insertion and late joining normally need no resource reload during gameplay. Audio prepared or enabled after a player connects still needs a one-time live pack load for that player, or a reconnect to preload it. Loading and countdown messages are not sent to the action bar. A nearby listener receives the normal song title when playback begins. Only the joining player's packs and warmup change; existing listeners retain their continuous sources. The default joining wait after packs load is approximately 3–18 seconds, depending on the next actual Vorbis entry point and server/client delays.
 
 ## Status
 

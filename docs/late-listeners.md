@@ -58,7 +58,9 @@ The generator refuses to overwrite an existing output directory. Music stays out
 
 The server stores a full recording and continuous suffixes at roughly fifteen-second intervals. These are copied Vorbis packets rather than separately re-encoded chunks. The catalogue accounts for Minecraft's decoder lead-in and each suffix's actual sample offset. A small codec startup transient can remain at a join; there are no repeated segment boundaries during subsequent playback.
 
-Legacy catalogue base packs are still delivered at login. Other prepared packs are requested after entering the world, only for a player who needs to join a playing song. Preparation and admission run silently without loading/countdown action-bar messages. New per-song full recordings are included in that live request. The server waits for that player's successful pack-load responses before scheduling audio. Other players keep their existing packs and sound sources.
+All enabled prepared songs, including their joining audio, are delivered with the resource packs at login. This can increase login loading time, but first insertion and late joining use the already loaded packs without another resource-loading screen. Packs needed by currently playing versions are also included. Legacy base packs retain their login delivery.
+
+Audio prepared or enabled after a player connects still requires a one-time live pack load when that player first needs it; reconnecting preloads it instead. Preparation and admission send no loading/countdown action-bar messages. The server waits for that player's successful pack-load responses before scheduling audio. Other players keep their existing packs and sound sources.
 
 Initial prepared playback gives clients three seconds for decoding after the warm-up packets are sent. If the server stalls before anyone starts, it defers the whole beginning rather than skipping the introduction. Once any listener has started, the session's timeline stays fixed. A newcomer gets at least three seconds of preparation, then the next available entry point; an admission that misses its deadline by more than 150 ms moves to a later entry point. There is no suitable entry point during the last few seconds of a track; a newcomer then waits for the next disc.
 
@@ -79,6 +81,8 @@ python tools/check-multiclient-audio.py --name join-test-01 --catalog prepared-m
 ```
 
 The decoder check verifies suffix frame counts and every sample after the codec lead-in against the full recording using Minecraft's own JOrbis implementation. The two-client test runs a dedicated loopback server and two separate observing clients. Its observer reads native audio state and does not implement playback, seeking or synchronization.
+
+The two-client check also verifies that every prepared sound is available before gameplay and that its sound definitions are not reloaded during playback or late joining. Add `--managed-catalog` with a single-song catalogue to test login delivery through the per-song controller instead of the legacy catalogue.
 
 `--packaged` tests the built release jar. On a constrained test machine, `--client-heap 1G --server-heap 768M` reduces the isolated runtimes' maximum heaps; these settings are recorded with the results. Windows validation can also add `--vanilla-smoke` after installing `pycaw` into `build/audio-meter`. That check launches the untouched publisher client and reads only its own OS audio-session peak to verify distant silence, nearby music and explicit stopping. It records no audio and makes no synchronization measurement.
 

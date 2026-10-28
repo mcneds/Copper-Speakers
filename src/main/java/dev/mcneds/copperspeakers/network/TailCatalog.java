@@ -124,8 +124,13 @@ public final class TailCatalog {
             if (catalogue == null) return;
             var selected = new LinkedHashSet<Pack>();
             catalogue.packs.stream().filter(Pack::base).forEach(selected::add);
-            // Joining packs are pushed in play by ensureReady, where the player
-            // can see loading progress. Preserve legacy base delivery at login.
+            // Load prepared audio with the login packs so first insertion does not
+            // interrupt gameplay with a resource reload. Include managed songs too.
+            catalogue.tracks.forEach((sound, track) -> {
+                if (admissionsAllowed(server, sound)) selected.addAll(track.packs);
+            });
+            // A playing session may still use an older version of a replaced song.
+            catalogue.active.values().forEach(track -> selected.addAll(track.packs));
             var state = state(context);
             for (var pack : selected) {
                 state.pending.add(pack.uuid);
