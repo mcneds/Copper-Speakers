@@ -56,6 +56,7 @@ public final class PreparedSongs implements AutoCloseable {
     private final List<Version> versions = new ArrayList<>();
     private final Set<Path> rejected = new HashSet<>();
     private Map<String, Setting> desired = Map.of();
+    private Map<String, SongStatus> statuses = Map.of();
     private Map<String, Object> lastEvents;
     private String settingsError;
     private volatile boolean closed;
@@ -86,6 +87,52 @@ public final class PreparedSongs implements AutoCloseable {
         }
     }
     public void start() { poller.scheduleWithFixedDelay(this::safePoll, 0, 1, TimeUnit.SECONDS); }
+    public record SongStatus(boolean enabled, String state, String error) {}
+
+    /** Commands share the control worker with polling; never block the server thread on these futures. */
+    public CompletableFuture<Setting> setEnabled(String sound, boolean enabled, String source) {
+        return submit(() -> {
+            if (!sound.matches("[a-z0-9_.-]+:[a-z0-9/._-]+")) throw new IllegalArgumentException("Invalid sound identifier");
+            var settings = new TreeMap<>(readSettings(root.resolve("settings.json")));
+            var previous = settings.get(sound);
+            String recording = source != null ? source : previous == null ? null : previous.source;
+            if (enabled) {
+                if (recording != null) {
+                    Path path = Path.of(recording);
+                    if (!path.isAbsolute() || !Files.isRegularFile(path))
+                        throw new IllegalArgumentException("Supply an absolute server path to the song's mono Ogg/Vorbis file");
+                    recording = path.toRealPath().toString();
+                } else if (!backend.available(sound)) {
+                    throw new IllegalArgumentException("No prepared audio for " + sound
+                            + ". Use /copperspeakers sync enable " + sound + " \"/absolute/path/song.ogg\"");
+                }
+            }
+            var setting = new Setting(UUID.randomUUID().toString(), enabled, recording,
+                    previous == null ? 15 : previous.spacingSeconds, false);
+            settings.put(sound, setting);
+            atomicJson(root.resolve("settings.json"), Map.of("format", 1, "tracks", settings));
+            poll();
+            return setting;
+        });
+    }
+    public CompletableFuture<SongStatus> status(String sound) {
+        return submit(() -> {
+            var status = statuses.get(sound);
+            return status != null ? status : new SongStatus(true, backend.available(sound) ? "ready" : "unprepared", null);
+        });
+    }
+    private <T> CompletableFuture<T> submit(Callable<T> task) {
+        var result = new CompletableFuture<T>();
+        try {
+            poller.execute(() -> {
+                try {
+                    if (closed) throw new IllegalStateException("Song sync control is stopped");
+                    result.complete(task.call());
+                } catch (Exception e) { result.completeExceptionally(e); }
+            });
+        } catch (RejectedExecutionException e) { result.completeExceptionally(e); }
+        return result;
+    }
     private void safePoll() {
         if (closed) return;
         try { poll(); }
@@ -187,6 +234,7 @@ public final class PreparedSongs implements AutoCloseable {
     }
     private void writeStatus() throws Exception {
         Map<String, Object> tracks = new TreeMap<>();
+        Map<String, SongStatus> summary = new HashMap<>();
         var snapshot = backend.snapshot(desired.keySet());
         for (var entry : desired.entrySet()) {
             String sound = entry.getKey();
@@ -199,6 +247,7 @@ public final class PreparedSongs implements AutoCloseable {
             row.put("state", jobs.containsKey(sound) ? "preparing" : errors.containsKey(sound) ? "failed"
                     : setting.deletePrepared && count > 0 ? "deletion_pending" : !setting.enabled ? "disabled"
                     : Boolean.TRUE.equals(snapshot.get(sound).get("available")) ? "ready" : "unprepared");
+            summary.put(sound, new SongStatus(setting.enabled, (String) row.get("state"), errors.get(sound)));
             row.put("preparedVersions", count);
             row.put("activation", "next_insertion");
             if (errors.containsKey(sound)) row.put("error", errors.get(sound));
@@ -213,6 +262,7 @@ public final class PreparedSongs implements AutoCloseable {
         status.put("tracks", tracks);
         if (settingsError != null) status.put("settingsError", settingsError);
         atomicJson(root.resolve("status.json"), status);
+        statuses = Map.copyOf(summary);
     }
     public static Map<String, Setting> readSettings(Path file) throws IOException {
         if (!Files.exists(file)) return Map.of();

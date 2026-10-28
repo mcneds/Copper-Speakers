@@ -43,6 +43,34 @@ public final class CopperGameTests {
     private static BlockPos master(GameTestHelper h) { return h.absolutePos(MASTER); }
     private static void insert(JukeboxBlockEntity box) { box.setTheItem(new ItemStack(Items.MUSIC_DISC_CAT)); }
 
+    @GameTest(structure = ARENA) public void songSyncCommandPermissionsAndArguments(GameTestHelper h) throws Exception {
+        var server = h.getLevel().getServer();
+        var source = server.createCommandSourceStack();
+        var dispatcher = server.getCommands().getDispatcher();
+        var root = dispatcher.getRoot().getChild("copperspeakers");
+        check(root != null, "Song sync commands must be registered on the server");
+        check(root.canUse(source.withPermission(net.minecraft.server.permissions.LevelBasedPermissionSet.ADMIN)),
+                "Server administrators must be able to control song sync");
+        check(!root.canUse(source.withPermission(net.minecraft.server.permissions.PermissionSet.NO_PERMISSIONS)),
+                "Players without operator permission must not access server audio files");
+        check(!root.canUse(source.withPermission(net.minecraft.server.permissions.LevelBasedPermissionSet.GAMEMASTER)),
+                "Changing server audio settings requires administrator permission");
+        for (String command : java.util.List.of(
+                "copperspeakers sync enable minecraft:music_disc.cat",
+                "copperspeakers sync enable example:evening \"C:/Music/My song.ogg\"",
+                "copperspeakers sync disable example:evening",
+                "copperspeakers sync status example:evening")) {
+            var parsed = dispatcher.parse(command, source);
+            net.minecraft.commands.Commands.validateParseResults(parsed);
+            check(parsed.getContext().getCommand() != null, "Command must be executable: " + command);
+        }
+        var suggestions = dispatcher.getCompletionSuggestions(
+                dispatcher.parse("copperspeakers sync enable minecraft:music_disc.", source)).join();
+        check(suggestions.getList().stream().anyMatch(s -> s.getText().equals("minecraft:music_disc.cat")),
+                "Song completion must suggest the original sound-event ID");
+        h.succeed();
+    }
+
     @GameTest(structure = ARENA) public void speakerNoteLifecycle(GameTestHelper h) {
         var box = setup(h);
         var net = network(h);

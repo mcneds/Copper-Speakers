@@ -8,16 +8,35 @@ import org.geysermc.geyser.shaded.org.cloudburstmc.protocol.bedrock.data.sound.*
 final class CoordinatedAudioTest {
     private record Task(long due, long order, Runnable action) {}
     private record Update(long handle, SoundData event, long at) {}
+    private static final class Playback {
+        float seconds;
+        long changed;
+        boolean running = true;
+        Playback(float seconds, long changed) { this.seconds = seconds; this.changed = changed; }
+        float position(long now) { return seconds + (running ? (now - changed) / 1_000_000_000f : 0); }
+    }
     private static final class Fixture {
         long now, order;
         final PriorityQueue<Task> tasks = new PriorityQueue<>(Comparator.comparingLong(Task::due).thenComparingLong(Task::order));
         final List<Update> updates = new ArrayList<>();
         final List<CoordinatedAudio.Entry> prepared = new ArrayList<>();
+        final Map<Long, Playback> playback = new HashMap<>();
         final CoordinatedAudio audio = new CoordinatedAudio(() -> now,
                 (delay, action) -> tasks.add(new Task(now + delay * 1_000_000L, order++, action)),
                 new CoordinatedAudio.Output() {
-                    public void prepare(CoordinatedAudio.Entry entry, float offset) { prepared.add(entry); }
-                    public void update(long handle, SoundData event) { updates.add(new Update(handle, event, now)); }
+                    public void prepare(CoordinatedAudio.Entry entry, float offset) {
+                        prepared.add(entry); playback.put(entry.handle, new Playback(offset, now));
+                    }
+                    public void update(long handle, SoundData event) {
+                        updates.add(new Update(handle, event, now));
+                        var voice = playback.get(handle);
+                        if (event instanceof StopSoundData) { playback.remove(handle); return; }
+                        if (voice == null) return;
+                        voice.seconds = voice.position(now); voice.changed = now;
+                        if (event instanceof PauseSoundData) voice.running = false;
+                        if (event instanceof ResumeSoundData) voice.running = true;
+                        if (event instanceof SeekToSoundData seek) voice.seconds = seek.getSeconds();
+                    }
                 });
         CoordinatedAudio.Clock start(long handle, float offset, boolean audible) {
             var clock = new CoordinatedAudio.Clock(offset, 1, now);
@@ -26,7 +45,7 @@ final class CoordinatedAudioTest {
         }
         void until(long millis) {
             long target = millis * 1_000_000L;
-            while (!tasks.isEmpty() && tasks.peek().due <= target) { var task = tasks.remove(); now = task.due; task.action.run(); }
+            while (!tasks.isEmpty() && tasks.peek().due <= target) { var task = tasks.remove(); now = Math.max(now, task.due); task.action.run(); }
             now = target;
         }
         List<Update> type(Class<?> type) { return updates.stream().filter(u -> type.isInstance(u.event)).toList(); }
@@ -52,13 +71,13 @@ final class CoordinatedAudioTest {
         f.audio.start(3, "record.cat", Vector3f.ZERO, 4, 1, spare, true);
         f.until(release + 5000 + release);
         var late = f.type(SeekToSoundData.class).stream().filter(u -> u.handle == 3).findFirst().orElseThrow();
-        check(Math.abs(((SeekToSoundData)late.event).getSeconds() - (20 + release / 1000f)) < .001,
-                "A newly attached speaker joins the existing clock after its own preparation");
+        check(Math.abs(((SeekToSoundData)late.event).getSeconds() - (20 + (release - CoordinatedAudio.SETTLE_MS) / 1000f)) < .001,
+                "A newly attached speaker joins the current clock before settling silently");
         check(f.type(ResumeSoundData.class).stream().filter(u -> u.handle == 1 || u.handle == 2).count() == 2,
                 "Attaching a speaker must never pause or resume existing sources");
         check(f.updates.stream().noneMatch(u -> u.handle != 3 && u.at > release * 1_000_000L),
                 "Attaching a speaker must not send any updates to existing handles");
-        check(Math.abs(a.position(f.now) - ((SeekToSoundData)late.event).getSeconds()) < .001,
+        check(Math.abs(a.position(f.now) - f.playback.get(3L).position(f.now)) < .001,
                 "Existing song clocks continue uninterrupted during attachment");
 
         var stopped = new Fixture(); stopped.start(1, 0, true); stopped.until(100); stopped.audio.stop(1); stopped.until(release + 10);
@@ -99,6 +118,51 @@ final class CoordinatedAudioTest {
         var second = independent.start(2, 0, true); independent.until(2 * release + 1000);
         check(first.epoch != second.epoch && first.position(independent.now) > 3 && second.position(independent.now) == 0,
                 "Independent starts retain separate timelines");
+        delayedAttachmentRelease(release);
+        stoppedSilentAttachment(release);
         System.out.println("PASS: coordinated starts, intro preservation, late attachment, ejection, replacement, disconnect/rejoin, and independent clocks");
+    }
+
+    private static void delayedAttachmentRelease(long release) {
+        var f = new Fixture();
+        var original = f.start(1, 0, true); var spare = f.start(2, 0, false);
+        f.until(release + 5000);
+        f.audio.start(2, "record.cat", Vector3f.ZERO, 4, 1, spare, true);
+        long seekAt = release + 5000 + CoordinatedAudio.BATCH_MS + CoordinatedAudio.PREPARATION_MS;
+        f.until(seekAt);
+        check(f.playback.get(2L).running && f.audio.phase(2).equals("preparing"),
+                "A newcomer advances silently while its audio settles");
+        check(f.type(SetVolumeSoundData.class).stream().noneMatch(u -> u.handle == 2),
+                "A newcomer must remain muted until settling completes");
+        // The event loop stalls between seeking a newcomer and making it audible.
+        // A paused source would retain its predicted position throughout this stall.
+        f.now = (seekAt + CoordinatedAudio.SETTLE_MS + 180) * 1_000_000L;
+        f.until(f.now / 1_000_000L);
+        float existingPosition = f.playback.get(1L).position(f.now);
+        float attachedPosition = f.playback.get(2L).position(f.now);
+        check(Math.abs(existingPosition - attachedPosition) < .001,
+                "A delayed attachment release must not leave the new speaker behind: "
+                        + existingPosition + " versus " + attachedPosition);
+        check(Math.abs(original.position(f.now) - existingPosition) < .001,
+                "Attachment must preserve the existing listener's timeline");
+        check(f.audio.phase(2).equals("playing"), "The delayed newcomer becomes audible");
+        check(f.type(ResumeSoundData.class).stream().filter(u -> u.handle == 2).count() == 1,
+                "Unmuting must not resume a newcomer a second time");
+    }
+
+    private static void stoppedSilentAttachment(long release) {
+        var f = new Fixture();
+        f.start(1, 0, true); var spare = f.start(2, 0, false);
+        f.until(release + 5000);
+        f.audio.start(2, "record.cat", Vector3f.ZERO, 4, 1, spare, true);
+        f.until(release + 5000 + CoordinatedAudio.BATCH_MS + CoordinatedAudio.PREPARATION_MS);
+        check(f.playback.get(2L).running, "The late voice is already advancing silently");
+        f.audio.stop(2);
+        f.until(2 * release + 5000);
+        check(!f.playback.containsKey(2L) && f.audio.phase(2).equals("stopped"),
+                "Ejection during silent settling must stop the new voice");
+        check(f.type(SetVolumeSoundData.class).stream().noneMatch(u -> u.handle == 2),
+                "A stale unmute callback must never make a stopped voice audible");
+        check(f.audio.phase(1).equals("playing"), "Stopping a newcomer preserves existing playback");
     }
 }

@@ -95,6 +95,17 @@ public final class TailCatalog {
         var catalogue = CATALOGS.get(server);
         return catalogue == null || !admissionsAllowed(server, sound) ? null : catalogue.tracks.get(sound);
     }
+    public static PreparedSongs control(MinecraftServer server) {
+        var catalogue = CATALOGS.get(server);
+        return catalogue == null ? null : catalogue.control;
+    }
+    public static Set<Identifier> knownSounds(MinecraftServer server) {
+        var catalogue = CATALOGS.get(server);
+        if (catalogue == null) return Set.of();
+        var sounds = new HashSet<>(catalogue.tracks.keySet());
+        catalogue.settings.keySet().forEach(sound -> sounds.add(Identifier.parse(sound)));
+        return sounds;
+    }
     public static boolean admissionsAllowed(MinecraftServer server, Identifier sound) {
         var catalogue = CATALOGS.get(server);
         var setting = catalogue == null ? null : catalogue.settings.get(sound.toString());

@@ -89,14 +89,18 @@ final class CoordinatedAudio {
     }
     private void seek(List<Entry> batch, Epoch epoch, boolean fresh) {
         if (closed) return;
-        long releaseTime = now.getAsLong() + SETTLE_MS * 1_000_000L;
+        long seekTime = now.getAsLong();
+        long releaseTime = seekTime + SETTLE_MS * 1_000_000L;
         // Only the creating batch may establish an epoch. Late attachments keep
         // their existing epoch and never change any already-playing handle.
         if (fresh) epoch.started = releaseTime;
         var ready = batch.stream().filter(e -> e.prepared && active.get(e.handle) == e).toList();
-        // Seek every source against one timestamp before changing volume or resuming any.
-        // Fresh clocks begin at their requested offset, preserving the first note.
-        for (var entry : ready) output.update(entry.handle, new SeekToSoundData(entry.clock.position(releaseTime)));
+        // Fresh clocks stay paused at the opening until their coordinated release.
+        // New speakers on a running clock advance silently during settling. Their
+        // position then stays current even if the eventual unmute callback is late.
+        long targetTime = fresh ? releaseTime : seekTime;
+        for (var entry : ready) output.update(entry.handle, new SeekToSoundData(entry.clock.position(targetTime)));
+        if (!fresh) for (var entry : ready) output.update(entry.handle, new ResumeSoundData());
         scheduler.later(SETTLE_MS, () -> release(ready, epoch, fresh));
     }
     private void release(List<Entry> batch, Epoch epoch, boolean fresh) {
@@ -104,7 +108,10 @@ final class CoordinatedAudio {
         if (fresh) epoch.started = now.getAsLong();
         var ready = batch.stream().filter(e -> e.prepared && active.get(e.handle) == e).toList();
         for (var entry : ready) output.update(entry.handle, new SetVolumeSoundData(entry.volume));
-        for (var entry : ready) { output.update(entry.handle, new ResumeSoundData()); entry.released = true; }
+        for (var entry : ready) {
+            if (fresh) output.update(entry.handle, new ResumeSoundData());
+            entry.released = true;
+        }
     }
     String phase(long handle) {
         var entry = active.get(handle);

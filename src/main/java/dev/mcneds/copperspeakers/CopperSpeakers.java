@@ -2,6 +2,7 @@ package dev.mcneds.copperspeakers;
 
 import dev.mcneds.copperspeakers.block.CopperWireBlock;
 import dev.mcneds.copperspeakers.block.SpeakerBlock;
+import dev.mcneds.copperspeakers.command.JoiningCommands;
 import dev.mcneds.copperspeakers.network.AudioNetworks;
 import dev.mcneds.copperspeakers.network.WallPlates;
 import dev.mcneds.copperspeakers.network.TailCatalog;
@@ -51,6 +52,7 @@ public final class CopperSpeakers implements ModInitializer {
         PolymerResourcePackUtils.addModAssets(ID);
         PolymerResourcePackUtils.markAsRequired();
         TailCatalog.initialize();
+        JoiningCommands.initialize();
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
             if (entity instanceof WallPlateEntity plate) WallPlates.get(level).add(plate);
         });

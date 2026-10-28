@@ -198,4 +198,73 @@ class PreparedSongsTest {
             assertFalse(Files.exists(partial));
         }
     }
+    @Test void commandsPreserveOtherSongsAndReuseSavedSourceAndSpacing() throws Exception {
+        var backend = new Backend();
+        var original = setting("original", false, 5, true);
+        var other = new PreparedSongs.Setting("other", false, null, 30, false);
+        PreparedSongs.atomicJson(root.resolve("settings.json"), Map.of("format", 1, "tracks",
+                Map.of(SOUND, original, "example:other", other)));
+        try (var control = new PreparedSongs(root, backend, (sound, setting, out) -> output(out))) {
+            var enabled = control.setEnabled(SOUND, true, null).get(5, TimeUnit.SECONDS);
+            assertTrue(enabled.enabled());
+            assertFalse(enabled.deletePrepared());
+            assertEquals(original.source(), enabled.source());
+            assertEquals(5, enabled.spacingSeconds());
+            assertNotEquals(original.revision(), enabled.revision());
+            until(control, () -> backend.installs == 1);
+            assertEquals("ready", control.status(SOUND).get(5, TimeUnit.SECONDS).state());
+            var disabled = control.setEnabled(SOUND, false, null).get(5, TimeUnit.SECONDS);
+            assertFalse(disabled.enabled());
+            assertEquals(enabled.source(), disabled.source());
+            assertEquals("disabled", control.status(SOUND).get(5, TimeUnit.SECONDS).state());
+            assertEquals(other, PreparedSongs.readSettings(root.resolve("settings.json")).get("example:other"));
+            control.setEnabled(SOUND, true, null).get(5, TimeUnit.SECONDS);
+            assertEquals(2, backend.installs, "Re-enabling installs the reusable generation");
+            assertEquals(1, backend.installed.size());
+        }
+    }
+    @Test void commandRejectsMissingAudioAndMalformedSettingsWithoutOverwritingThem() throws Exception {
+        try (var control = new PreparedSongs(root, new Backend(), (sound, setting, out) -> output(out))) {
+            var missing = assertThrows(ExecutionException.class,
+                    () -> control.setEnabled(SOUND, true, null).get(5, TimeUnit.SECONDS));
+            assertTrue(missing.getCause().getMessage().contains("No prepared audio"));
+            assertFalse(Files.exists(root.resolve("settings.json")));
+            assertThrows(ExecutionException.class,
+                    () -> control.setEnabled(SOUND, true, "relative.ogg").get(5, TimeUnit.SECONDS));
+            assertFalse(Files.exists(root.resolve("settings.json")));
+            Files.writeString(root.resolve("settings.json"), "{bad input");
+            assertThrows(ExecutionException.class,
+                    () -> control.setEnabled(SOUND, false, null).get(5, TimeUnit.SECONDS));
+            assertEquals("{bad input", Files.readString(root.resolve("settings.json")));
+        }
+    }
+    @Test void commandsSerializeSongUpdatesAndUseExistingCatalogueWithoutSource() throws Exception {
+        var backend = new Backend();
+        backend.installed.put(SOUND, root.resolve("legacy"));
+        try (var control = new PreparedSongs(root, backend, (sound, setting, out) -> fail("Legacy audio needs no preparation"))) {
+            var enable = control.setEnabled(SOUND, true, null);
+            var disableOther = control.setEnabled("example:other", false, null);
+            CompletableFuture.allOf(enable, disableOther).get(5, TimeUnit.SECONDS);
+            var settings = PreparedSongs.readSettings(root.resolve("settings.json"));
+            assertEquals(Set.of(SOUND, "example:other"), settings.keySet());
+            assertTrue(settings.get(SOUND).enabled());
+            assertFalse(settings.get("example:other").enabled());
+            assertEquals("ready", control.status(SOUND).get(5, TimeUnit.SECONDS).state());
+            assertEquals("unprepared", control.status("example:unknown").get(5, TimeUnit.SECONDS).state());
+        }
+    }
+    @Test void commandPreparesNewSourceAndReportsConversionFailure() throws Exception {
+        var source = setting("unused", true, 15, false).source();
+        try (var control = new PreparedSongs(root, new Backend(), (sound, setting, out) -> {
+            throw new java.io.IOException("unsupported recording");
+        })) {
+            control.setEnabled(SOUND, true, source).get(5, TimeUnit.SECONDS);
+            until(control, () -> {
+                try { return state().equals("failed"); } catch (Exception e) { return false; }
+            });
+            var status = control.status(SOUND).get(5, TimeUnit.SECONDS);
+            assertEquals("failed", status.state());
+            assertTrue(status.error().contains("unsupported recording"));
+        }
+    }
 }
