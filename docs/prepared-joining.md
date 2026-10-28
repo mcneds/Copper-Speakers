@@ -66,7 +66,7 @@ Settings changes cancel obsolete jobs. A completion for an obsolete revision can
 
 `ready` means prepared audio is registered for the **next insertion**. An ordinary playing session has no dependable shared audio clock, so enabling cannot safely turn it into a prepared session. Its listeners continue without interruption. Eject/reinsert when you want the new behavior. Disabling and re-enabling admissions for an already prepared session can take effect during that session, using the prepared version it started with; replacing a recording or spacing uses the new version on the next insertion.
 
-Joining Java players see `Loading music…` during live pack loading, then `Joining music in 12s…` with the actual scheduled deadline. The countdown updates once per second and changes if admission is rescheduled. The title appears briefly when playback begins. Only the joining player's packs and warmup change; existing listeners retain their continuous sources. The default joining wait after packs load is approximately 3–18 seconds, depending on the next actual Vorbis entry point and server/client delays.
+Joining runs silently during pack loading and scheduled admission. Loading and countdown messages are not sent to the action bar. A nearby listener receives the normal song title when playback begins. Only the joining player's packs and warmup change; existing listeners retain their continuous sources. The default joining wait after packs load is approximately 3�18 seconds, depending on the next actual Vorbis entry point and server/client delays.
 
 ## Status
 
@@ -132,6 +132,6 @@ python tools/verify-join-audio.py prepared-test
 python tools/check-multiclient-audio.py --name live-joining-test --catalog prepared-test --live-source /path/to/original-cat.ogg --diagnostic --client-heap 1G --server-heap 768M
 ```
 
-The last command starts a disposable loopback server and two clients. It checks live preparation while ordinary music plays, activation at reinsertion, late joining, action-bar countdown, source continuity, disabled admissions after a dimension return, deferred deletion, and unchanged main-pack bytes. Diagnostic mode checks functionality only. Attempt logs and results stay under ignored `build/validation/`; no live-server credentials or deployment scripts are used.
+The last command starts a disposable loopback server and two clients. It checks live preparation while ordinary music plays, activation at reinsertion, late joining, silent admission, source continuity, disabled admissions after a dimension return, deferred deletion, and unchanged main-pack bytes. Diagnostic mode checks functionality only. Attempt logs and results stay under ignored `build/validation/`; no live-server credentials or deployment scripts are used.
 
 Automated build coverage and release packaging are described in [Releases](releases.md).

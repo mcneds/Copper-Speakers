@@ -1,6 +1,7 @@
 import importlib.util
 import io
 import json
+import math
 from pathlib import Path
 import tempfile
 import unittest
@@ -16,7 +17,7 @@ spec_patch.loader.exec_module(display_patch)
 
 
 class VisualConversionTests(unittest.TestCase):
-    def test_speaker_front_is_corrected_in_all_four_block_orientations(self):
+    def test_speaker_driver_faces_the_java_direction_in_all_four_orientations(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             image = Image.new('RGBA', (16, 16), (220, 40, 20, 255))
@@ -32,8 +33,20 @@ class VisualConversionTests(unittest.TestCase):
             with zipfile.ZipFile(root / 'client.jar', 'w'): pass
             converter.convert(root / 'java.zip', root / 'client.jar', root / 'output', root / 'icons')
             states = json.loads((root / 'output/copper-speakers-blocks.json').read_text())['blocks']['minecraft:note_block']['state_overrides']
-            self.assertEqual([states[f'instrument=harp,note={i},powered=true']['transformation']['rotation']
-                              for i in range(4)], [[0, 180, 0], [0, 270, 0], [0, 0, 0], [0, 90, 0]])
+            # Bedrock's positive Y rotation turns a north face toward west;
+            # Java's corresponding blockstate rotation turns it toward east.
+            expected = [(0, 0, -1), (1, 0, 0), (0, 0, 1), (-1, 0, 0)]
+            with zipfile.ZipFile(root / 'output/copper-speakers-bedrock.mcpack') as pack:
+                geometries = {g['description']['identifier']: g
+                              for name in pack.namelist() if name.endswith('.geo.json')
+                              for g in json.loads(pack.read(name))['minecraft:geometry']}
+                for i, direction in enumerate(expected):
+                    state = states[f'instrument=harp,note={i},powered=true']
+                    cube = geometries[state['geometry']]['bones'][0]['cubes'][0]
+                    self.assertEqual(set(cube['uv']), {'north'})
+                    yaw = math.radians(state['transformation']['rotation'][1])
+                    front = (round(-math.sin(yaw)), 0, round(-math.cos(yaw)))
+                    self.assertEqual(front, direction, f'Java orientation {i * 90} must face {direction}')
 
     def test_native_display_override_preserves_other_displays_and_rebuilds_cleanly(self):
         with tempfile.TemporaryDirectory() as tmp:

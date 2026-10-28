@@ -269,11 +269,9 @@ def main():
             assert not any(f['sounds'] for f in reports['b']['observations']
                            if f['hostNanos'] > marks['disabled-client-returns'] + 2_000_000_000), 'Disabled song admitted a returning listener'
             messages = [f.get('actionBar', '') for report in reports.values() for f in report['observations']]
-            assert any(m.startswith('Joining music in ') for m in messages), 'No action-bar countdown was observed'
+            assert not any(m.startswith(('Joining music in ', 'Loading music')) for m in messages), 'Joining must not display loading/countdown action bars'
             assert any(m == 'C418 - cat' for m in messages) if not args.sound else True
-            assert any(m == 'Loading music…' for m in messages), 'No loading action bar was observed'
-            assert any(f.get('actionBar') == 'Loading music…' for f in reports['b']['observations']), 'Late joiner did not see pack-loading progress'
-            result.update(enablePreservedOrdinaryPlayback=True, disabledAdmissionsStopped=True, actionBarCountdownObserved=True)
+            result.update(enablePreservedOrdinaryPlayback=True, disabledAdmissionsStopped=True, silentJoiningVerified=True)
         root_samples = {r: [s for f in report['observations']
                            if not args.live_source or f['hostNanos'] > marks['insert-disc']
                            if r != 'a' or not args.extended or f['hostNanos'] < marks['initial-client-leaves-dimension']

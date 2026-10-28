@@ -172,10 +172,11 @@ def convert(java_pack, client_jar, output, icons=None, version='0.3.0'):
                     overrides[state] = {'geometry': invisible_id, 'material_instances': {
                         '*': {'texture': 'copperbedrock_empty', 'render_method': 'alpha_test'}}}
                 else:
-                    # Speaker fronts are reversed in Bedrock's block renderer.
-                    # Correct that carrier only; display wires and plates use a separate path.
+                    # Java blockstate yaw and Bedrock block yaw turn in opposite
+                    # directions. An added half-turn fixes east/west accidentally
+                    # while reversing north/south. Keep the model's north face.
                     yaw = variant.get('y', 0)
-                    if variant['model'] == 'copper_speakers:block/speaker': yaw = (yaw + 180) % 360
+                    if variant['model'] == 'copper_speakers:block/speaker': yaw = -yaw % 360
                     overrides[state] = {'geometry': geometry(variant['model'], model(variant['model'])),
                                         'transformation': {'rotation': [-variant.get('x', 0), yaw, variant.get('z', 0)]}}
             blocks[block] = {'name': 'copperbedrock_' + block.split(':')[1], 'only_override_states': True,

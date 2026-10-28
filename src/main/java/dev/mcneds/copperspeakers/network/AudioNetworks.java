@@ -45,7 +45,6 @@ public final class AudioNetworks {
         final Map<BlockPos, SpeakerNotes> notes = new LinkedHashMap<>();
         TailCatalog.Track track;
         Identifier sound;
-        final Map<UUID, JoiningProgress> progress = new HashMap<>();
         Component description;
         long epochNanos;
         SpareVoices voices;
@@ -105,7 +104,6 @@ public final class AudioNetworks {
             session.voices = new SpareVoices(session.sources);
             for (var player : level.players()) {
                 if (TailCatalog.ensureReady(player, session.track)) prepareListener(session, player, session.track.entries().getFirst());
-                else showProgress(session, player, null);
             }
             // First-use marker construction/packet serialization can be expensive.
             // The clients must get the whole preparation window after we send it.
@@ -156,19 +154,7 @@ public final class AudioNetworks {
         }
         s.pending.put(player.getUUID(), new PendingListener(player, entry, due, warmup));
     }
-    private void showProgress(Session s, ServerPlayer player, Long due) {
-        var message = s.progress.computeIfAbsent(player.getUUID(), key -> new JoiningProgress()).update(System.nanoTime(), due);
-        if (message != null) player.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(message)));
-    }
-    private static void clearProgress(Session s, ServerPlayer player) {
-        if (s.progress.remove(player.getUUID()) != null)
-            player.connection.send(new ClientboundSetActionBarTextPacket(Component.empty()));
-    }
     private void advancePrepared(Session s) {
-        s.progress.keySet().removeIf(id -> {
-            var player = level.getServer().getPlayerList().getPlayer(id);
-            return player == null || player.level() != level;
-        });
         if (!TailCatalog.admissionsAllowed(level.getServer(), s.sound)) {
             cancelPreparations(s);
             return;
@@ -190,16 +176,17 @@ public final class AudioNetworks {
             if (player.level() != level || level.getServer().getPlayerList().getPlayer(player.getUUID()) != player
                     || TailCatalog.loading(player) || now - pending.dueNanos > 150_000_000L) {
                 pending.warmup.destroy(List.of(player));
-                clearProgress(s, player);
                 it.remove();
                 continue;
             }
             pending.warmup.keepParkedOutOfEarshot(player);
-            if (now < pending.dueNanos) { showProgress(s, player, pending.dueNanos); continue; }
+            if (now < pending.dueNanos) continue;
             pending.warmup.destroy(List.of(player));
             List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>();
             appendJukeboxNotification(s, player, packets);
-            packets.add(new ClientboundSetActionBarTextPacket(s.description.copy().withStyle(ChatFormatting.GREEN)));
+            if (s.sources.stream().anyMatch(source -> player.distanceToSqr(
+                    source.getX() + .5, source.getY() + .5, source.getZ() + .5) < 64 * 64))
+                packets.add(new ClientboundSetActionBarTextPacket(s.description.copy().withStyle(ChatFormatting.GREEN)));
             s.voices.appendStart(player, pending.entry.sound(), packets);
             long sendTime = System.nanoTime();
             if (pending.entry.offsetSeconds() == 0 && !s.timelineStarted) {
@@ -212,13 +199,11 @@ public final class AudioNetworks {
                 // This client's preparation took too long. Try a later entry;
                 // none of these packets have reached them or other listeners.
                 s.voices.forget(player, false);
-                clearProgress(s, player);
                 it.remove();
                 continue;
             }
             player.connection.send(new ClientboundBundlePacket(packets));
             s.listeners.put(player.getUUID(), player);
-            s.progress.remove(player.getUUID());
             it.remove();
         }
         if (startedTimeline) reschedulePending(s);
@@ -226,15 +211,13 @@ public final class AudioNetworks {
             if (s.listeners.containsKey(player.getUUID()) || s.pending.containsKey(player.getUUID())) continue;
             double earliest = (now + TailCatalog.PREPARATION_NANOS - s.epochNanos) / 1_000_000_000.0;
             var entry = s.track.atOrAfter(s.timelineStarted ? Math.max(0, earliest) : 0);
-            if (entry == null) { clearProgress(s, player); continue; }
-            if (!TailCatalog.ensureReady(player, s.track)) { showProgress(s, player, null); continue; }
+            if (entry == null) continue;
+            if (!TailCatalog.ensureReady(player, s.track)) continue;
             if (!s.timelineStarted && s.epochNanos < now + TailCatalog.PREPARATION_NANOS) {
                 s.epochNanos = now + TailCatalog.PREPARATION_NANOS;
                 reschedulePending(s);
             }
             prepareListener(s, player, entry);
-            var scheduled = s.pending.get(player.getUUID());
-            if (scheduled != null) showProgress(s, player, scheduled.dueNanos);
         }
     }
     private static void reschedulePending(Session s) {
@@ -244,8 +227,6 @@ public final class AudioNetworks {
     private void cancelPreparations(Session s) {
         s.pending.values().forEach(p -> p.warmup.destroy(List.of(p.player)));
         s.pending.clear();
-        for (var player : level.players()) clearProgress(s, player);
-        s.progress.clear();
     }
     public int preparationTicks(BlockPos master) {
         var s = sessions.get(master);
