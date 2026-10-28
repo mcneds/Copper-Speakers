@@ -241,6 +241,9 @@ public final class CopperBedrock implements Extension {
     static String bufferedSound(String name) {
         if (name.startsWith("copper_speakers:buffered."))
             name = "minecraft:music_disc." + name.substring("copper_speakers:buffered.".length());
+        if (name.startsWith("minecraft:music_disc."))
+            return "copperbedrock:buffered.record." + name.substring("minecraft:music_disc.".length());
+        if (!name.startsWith("minecraft:")) return name;
         String mapped = SoundUtils.translatePlaySound(name);
         return mapped.startsWith("record.") ? "copperbedrock:buffered." + mapped : mapped;
     }
