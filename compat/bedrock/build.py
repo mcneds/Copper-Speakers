@@ -22,6 +22,8 @@ def build(geyser, dependencies, output, javac, version, source=HERE):
                 classpath.append(path)
     classes = output / 'classes'
     compile_java(javac, classpath, (source / 'src').rglob('*.java'), classes)
+    shutil.copyfile(source.parents[1] / 'src/main/resources/assets/copper_speakers/lang/en_us.json',
+                    classes / 'copper-speakers-en_us.json')
     (classes / 'audio-events.properties').write_text('# Legacy mappings are loaded at runtime.\n', encoding='ascii')
     (classes / 'extension.yml').write_text((source / 'extension.yml').read_text(encoding='utf-8').replace('${version}', version), encoding='utf-8')
     test_classes = output / 'test-classes'

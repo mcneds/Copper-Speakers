@@ -16,6 +16,7 @@ import org.cloudburstmc.math.vector.Vector3i;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
+import org.geysermc.geyser.api.event.bedrock.SessionJoinEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserShutdownEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCommandsEvent;
@@ -61,6 +62,11 @@ public final class CopperBedrock implements Extension {
     @Subscribe
     public void initializeSession(SessionInitializeEvent event) {
         if (event.connection() instanceof GeyserSession session) VoxelSupport.install(session);
+    }
+    @Subscribe public void joined(SessionJoinEvent event) throws IOException {
+        // Locale downloads on a first Geyser startup can complete after extension
+        // initialization. Restore our fallback keys before the player's inventory.
+        ModTranslations.install();
     }
     @Subscribe
     public void entities(GeyserDefineEntitiesEvent event) {
@@ -111,6 +117,8 @@ public final class CopperBedrock implements Extension {
     @Subscribe
     public void initialize(GeyserPostInitializeEvent event) throws IOException {
         if (installed) return;
+        ModTranslations.install();
+        BlockPicking.install();
         var packs = Registries.RESOURCE_PACKS.get().values().stream()
                 .filter(holder -> holder.pack().contentKey() == null || holder.pack().contentKey().isEmpty())
                 .map(holder -> holder.codec()).filter(codec -> codec instanceof PathPackCodec)
