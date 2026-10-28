@@ -83,7 +83,9 @@ class PreparedSongsTest {
             write(setting("a", true, 15, false)); control.poll(); assertTrue(entered.await(3, TimeUnit.SECONDS));
             write(setting("b", false, 15, false)); control.poll(); finish.countDown();
             until(control, () -> {
-                try (var files = Files.walk(root.resolve("songs"))) { return files.anyMatch(p -> p.endsWith("request.json")); }
+                // Observe the consumed completion, not the worker's changing temporary files.
+                try { return JsonParser.parseString(Files.readString(root.resolve("status.json"))).getAsJsonObject()
+                        .getAsJsonObject("tracks").getAsJsonObject(SOUND).get("preparedVersions").getAsInt() == 1; }
                 catch (Exception e) { throw new RuntimeException(e); }
             });
             control.poll();

@@ -1,8 +1,8 @@
 # Bedrock compatibility
 
-## Download and install 0.3.0
+## Download and install 0.3.1
 
-Download [`copper-speakers-0.3.0-bedrock-fabric.zip`](https://github.com/mcneds/Copper-Speakers/releases/download/v0.3.0/copper-speakers-0.3.0-bedrock-fabric.zip) from [Copper Speakers 0.3.0](https://github.com/mcneds/Copper-Speakers/releases/tag/v0.3.0). This is the complete Fabric/Geyser compatibility bundle, including the Java mod. The standalone `copper-speakers-0.3.0.jar` is sufficient for Java players; Bedrock players also need the extensions, packs and mappings in the ZIP.
+Download [`copper-speakers-0.3.1-bedrock-fabric.zip`](https://github.com/mcneds/Copper-Speakers/releases/download/v0.3.1/copper-speakers-0.3.1-bedrock-fabric.zip) from [Copper Speakers 0.3.1](https://github.com/mcneds/Copper-Speakers/releases/tag/v0.3.1). This is the complete Fabric/Geyser compatibility bundle, including the Java mod. The standalone `copper-speakers-0.3.1.jar` is sufficient for Java players; Bedrock players also need the extensions, packs and mappings in the ZIP.
 
 The **Bedrock Fabric bundle** is built with the Java mod for every release. It contains:
 
@@ -20,7 +20,7 @@ Install matching Fabric API, Polymer and Geyser-Fabric separately. Follow the in
 
 | Bundle location | Install into the server |
 | --- | --- |
-| `mods/copper-speakers-0.3.0.jar` | `mods/` |
+| `mods/copper-speakers-0.3.1.jar` | `mods/` |
 | `config/Geyser-Fabric/extensions/*.jar` | Both CopperBedrock and the patched GeyserDisplayEntity in the same extensions folder |
 | `config/Geyser-Fabric/packs/*.mcpack` | Both matching packs in the same packs folder |
 | `config/Geyser-Fabric/custom_mappings/*.json` | Both block and item mappings in the same custom_mappings folder |
@@ -60,7 +60,9 @@ This reads that pack and writes a new bundle locally. It neither edits the pack 
 
 ## Custom music
 
-Keep your original music in its ordinary Java and Bedrock packs. This bundle includes buffered aliases for vanilla discs, not music files. Custom buffered event names are preserved. Where Java and Bedrock names differ, place an explicit mapping in the CopperBedrock extension's data folder as `sounds.json`:
+Keep your original music in its ordinary Java and Bedrock packs. This bundle includes buffered aliases for vanilla discs, not music files. At startup CopperBedrock reads Geyser's loaded, local, unencrypted Bedrock packs and automatically selects `<namespace>:buffered.<song>` when it is a non-streaming counterpart of `<namespace>:<song>` with the same audio files and playback settings. This includes wiki-generated custom songs during ordinary playback, prepared starts and late joins; no per-song mapping is needed. Existing buffered event names and prepared playback offsets are preserved.
+
+After publishing an updated music pack, reload/restart Geyser so it loads both the pack and its aliases; no extension rebuild is needed. Missing, streamed or mismatched aliases retain the original event. Remote/encrypted packs and differently named aliases can use an explicit mapping in the CopperBedrock extension's data folder as `sounds.json`; explicit entries take precedence over automatic discovery:
 
 ```json
 {"example_music:evening": "example_music:buffered.evening"}

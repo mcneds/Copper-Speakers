@@ -17,6 +17,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.entity.object.Direction;
 public final class ProtocolSmoke {
     public static void main(String[] args) {
         try { PreparedEventCatalogTest.run(); } catch (Exception e) { throw new AssertionError(e); }
+        try { BufferedSoundAliasesTest.run(); } catch (Exception e) { throw new AssertionError(e); }
         CoordinatedAudioTest.run();
         if (!CopperBedrock.bufferedSound("copper_speakers:buffered.cat").equals("copperbedrock:buffered.record.cat"))
             throw new AssertionError("Vanilla buffered alias must resolve to the bundled Bedrock sound");

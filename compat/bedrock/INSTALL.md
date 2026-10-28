@@ -21,7 +21,11 @@ packs/mappings must come from the same build.
 
 Custom music stays in your own Java/Bedrock music packs. Prepared joining uses
 the original Bedrock recording plus playback offsets; no Java suffix audio is
-bundled. For explicit custom sound aliases, copy `examples/sounds.json` to
+bundled. Local, unencrypted Bedrock packs are scanned at startup: matching
+non-streaming `<namespace>:buffered.<song>` definitions are selected automatically,
+including wiki songs during prepared playback and late joins. Reload/restart
+Geyser after replacing music packs. For remote/encrypted packs, differently named
+aliases or explicit overrides, copy `examples/sounds.json` to
 `config/Geyser-Fabric/extensions/copperbedrock/sounds.json` and edit its entries.
 Keys are Java sound events; values are existing sound definitions in your
 Bedrock pack. Custom buffered events retain their names by default. The example

@@ -27,6 +27,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 import org.geysermc.geyser.api.command.Command;
 import org.geysermc.geyser.api.command.CommandSource;
 import org.geysermc.geyser.api.extension.Extension;
+import org.geysermc.geyser.api.pack.PathPackCodec;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.registry.java.JavaRegistries;
 import org.geysermc.geyser.session.GeyserSession;
@@ -44,10 +45,11 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.Clie
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundSoundEntityPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundLevelEventPacket;
 
-/** Compatibility for Copper Speakers 0.2.0 on Geyser 2.12.1-b1273 / Bedrock 26.60. */
+/** Compatibility for Copper Speakers on Geyser 2.12.1-b1273 / Bedrock 26.60. */
 public final class CopperBedrock implements Extension {
     private final Map<String, Recording> recordings = new ConcurrentHashMap<>();
     private final Map<String, String> soundMappings = new ConcurrentHashMap<>();
+    private Map<String, String> bufferedAliases = Map.of();
     private final Map<GeyserSession, Listener> listeners = new ConcurrentHashMap<>();
     private boolean installed;
     private PreparedEventCatalog liveRecordings;
@@ -100,6 +102,11 @@ public final class CopperBedrock implements Extension {
     @Subscribe
     public void initialize(GeyserPostInitializeEvent event) throws IOException {
         if (installed) return;
+        var packs = Registries.RESOURCE_PACKS.get().values().stream()
+                .filter(holder -> holder.pack().contentKey() == null || holder.pack().contentKey().isEmpty())
+                .map(holder -> holder.codec()).filter(codec -> codec instanceof PathPackCodec)
+                .map(codec -> ((PathPackCodec) codec).path()).toList();
+        loadSoundAliases(packs, message -> logger().warning(message));
         Path customSounds = dataFolder().resolve("sounds.json");
         if (Files.isRegularFile(customSounds)) {
             var mappings = JsonParser.parseString(Files.readString(customSounds)).getAsJsonObject();
@@ -131,7 +138,8 @@ public final class CopperBedrock implements Extension {
                 CopperFrameEntity::new, key, frame.height(), frame.width(), frame.offset(),
                 frame.defaultBedrockDefinition(), frame.translators()));
         installed = true;
-        logger().info("Copper Speakers Bedrock audio enabled with " + recordings.size() + " prepared events");
+        logger().info("Copper Speakers Bedrock audio enabled with " + recordings.size()
+                + " prepared events and " + bufferedAliases.size() + " discovered buffered aliases");
     }
 
     @Subscribe
@@ -248,18 +256,23 @@ public final class CopperBedrock implements Extension {
         return mapped.startsWith("record.") ? "copperbedrock:buffered." + mapped : mapped;
     }
 
-    private String mappedSound(String name) {
-        return soundMappings.getOrDefault(name, bufferedSound(name));
+    void loadSoundAliases(java.util.List<Path> packs, java.util.function.Consumer<String> warning) {
+        bufferedAliases = BufferedSoundAliases.load(packs, warning);
     }
 
-    private Recording recording(String name) {
+    private String mappedSound(String name) {
+        String mapped = BufferedSoundAliases.select(name, soundMappings, bufferedAliases);
+        return mapped != null ? mapped : bufferedSound(name);
+    }
+
+    Recording recording(String name) {
         var decoded = PreparedEventCatalog.decode(name);
         if (decoded != null) return new Recording(mappedSound(decoded.sound()), decoded.offsetSeconds());
         var live = liveRecordings == null ? null : liveRecordings.find(name);
         if (live != null) return new Recording(mappedSound(live.sound()), live.offsetSeconds());
         Recording recording = recordings.get(name);
         if (recording != null) return recording;
-        if (name.contains(":buffered.") || soundMappings.containsKey(name))
+        if (name.contains(":buffered.") || soundMappings.containsKey(name) || bufferedAliases.containsKey(name))
             return new Recording(mappedSound(name), 0);
         return null;
     }
