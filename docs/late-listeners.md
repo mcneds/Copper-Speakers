@@ -8,7 +8,23 @@ Players connecting after insertion or returning from another dimension need prep
 
 ## Per-song control while the server runs
 
-Use the [local control and wiki bridge contract](wiki-music-bridge.md) to enable, disable, prepare, inspect, or request deferred deletion for one song. The default is 15-second joining points. This runs without rebuilding the main music pack or restarting Minecraft. An already playing ordinary song keeps its listeners and uses prepared joining on the next insertion. Legacy catalogues remain supported.
+Operators with permission level 3 or higher can control reconnect synchronization in chat or from the server console:
+
+```mcfunction
+/copperspeakers sync enable example:song_sound
+/copperspeakers sync disable example:song_sound
+/copperspeakers sync status example:song_sound
+```
+
+Use the original **sound-event identifier**; tab completion lists registered jukebox sounds and configured tracks. Enabling reuses a saved source or existing prepared catalogue. For a song with no prepared audio or saved source, supply the absolute path to its published mono Ogg/Vorbis recording on the server:
+
+```mcfunction
+/copperspeakers sync enable example:song_sound "/srv/music/song.ogg"
+```
+
+On Windows, use a quoted path with forward slashes, such as `"C:/Music/song.ogg"`. First-time preparation needs Python 3, NumPy, FFmpeg and ffprobe installed for the Minecraft service user. Preparation runs in the background; use `status` to check for `ready` or inspect a failure. Once ready, eject and reinsert the disc to activate prepared joining. Disabling prevents new admissions while current listeners keep playing.
+
+The default is 15-second joining points. These commands run without rebuilding the main music pack or restarting Minecraft. An already playing ordinary song keeps its listeners and uses prepared joining on the next insertion. Legacy catalogues remain supported. See the [local integration contract](prepared-joining.md) for file-based controls and deferred deletion.
 
 ## Prepare a legacy catalogue
 

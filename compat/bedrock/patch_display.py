@@ -30,7 +30,7 @@ def patch_source(relative, text):
     return text
 
 
-def patch_pack(pack_path, models):
+def patch_pack(pack_path, models, version=(0, 3, 0)):
     with zipfile.ZipFile(pack_path) as archive:
         files = {name: archive.read(name) for name in archive.namelist() if not name.endswith('/')}
     name = 'entity/item_display.entity.json'
@@ -66,8 +66,8 @@ def patch_pack(pack_path, models):
             if 'item_display' in entity_name else ['stable'])
         files[entity_name] = json.dumps(document, separators=(',', ':')).encode()
     manifest = json.loads(files['manifest.json'])
-    manifest['header']['version'] = [1, 2, 1]
-    for module in manifest['modules']: module['version'] = [1, 2, 1]
+    manifest['header']['version'] = list(version)
+    for module in manifest['modules']: module['version'] = list(version)
     files['manifest.json'] = json.dumps(manifest).encode()
     with zipfile.ZipFile(pack_path, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for name, data in files.items(): archive.writestr(name, data)

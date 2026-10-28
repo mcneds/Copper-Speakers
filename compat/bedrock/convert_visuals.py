@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert this server's Copper Speakers cuboids and Polymer carriers to Bedrock.
+"""Convert Copper Speakers cuboids and Polymer carriers from a supplied Java pack.
 
 Uses original Java models/textures, including vanilla textures from --client-jar.
 Requires Pillow. Outputs a pack and Geyser mappings; never edits the source pack.
@@ -15,6 +15,8 @@ import re
 import uuid
 import zipfile
 from PIL import Image, ImageChops
+from inventory_icons import render_icon
+from release_common import pack_version, zip_bytes
 
 
 def identifier_path(identifier, folder, suffix):
@@ -30,7 +32,7 @@ def default_uv(face, start, end):
             'west': [z, 16-Y, Z, 16-y], 'east': [16-Z, 16-Y, 16-z, 16-y]}[face]
 
 
-def convert(java_pack, client_jar, output, icons):
+def convert(java_pack, client_jar, output, icons=None, version='0.3.0'):
     output.mkdir(parents=True, exist_ok=True)
     files, textures, models = {}, {}, {}
     def write(name, value):
@@ -200,11 +202,10 @@ def convert(java_pack, client_jar, output, icons):
             items.setdefault('minecraft:' + fallback, []).append({
                 'type': 'definition', 'model': 'copper_speakers:' + name, 'bedrock_identifier': identifier,
                 'display_name': name.replace('_', ' ').title(), 'bedrock_options': {'icon': icon}})
-            icon_source = icons / (name + '.png')
-            if icon_source.is_file(): files['textures/items/' + icon + '.png'] = icon_source.read_bytes()
+            icon_source = icons / (name + '.png') if icons else None
+            if icon_source and icon_source.is_file(): files['textures/items/' + icon + '.png'] = icon_source.read_bytes()
             else:
-                image = next((textures[resolve(face['texture'], value['textures'])]
-                              for cube in value.get('elements', []) for face in cube['faces'].values()), Image.new('RGBA', (16, 16)))
+                image = render_icon(value, lambda slot: textures[resolve(slot, value['textures'])], default_uv)
                 data = io.BytesIO(); image.save(data, format='PNG');files['textures/items/' + icon + '.png'] = data.getvalue()
             item_textures[icon] = {'textures': 'textures/items/' + icon}
             # Inventory/held items use their icons. World displays use native
@@ -261,13 +262,13 @@ def convert(java_pack, client_jar, output, icons):
             sound_definitions['copperbedrock:buffered.' + event] = value
         write('sounds/sound_definitions.json', {'format_version': '1.14.0', 'sound_definitions': sound_definitions})
         write('manifest.json', {'format_version': 2, 'header': {'name': 'Copper Speakers for Bedrock',
-            'description': 'Copper Speakers 0.2.0 models, converted from the server pack',
-            'uuid': str(uuid.uuid5(uuid.NAMESPACE_DNS, 'copper-bedrock.mineandcraft.net')),
-            'version': [1, 2, 1], 'min_engine_version': [1, 26, 60]},
-            'modules': [{'type': 'resources', 'uuid': str(uuid.uuid5(uuid.NAMESPACE_DNS, 'copper-bedrock.mineandcraft.net.resources')), 'version': [1, 2, 1]}]})
+            'description': 'Copper Speakers ' + version + ' models and buffered sound aliases',
+            'uuid': str(uuid.uuid5(uuid.NAMESPACE_URL, 'https://github.com/mcneds/Copper-Speakers/bedrock/pack')),
+            'version': pack_version(version), 'min_engine_version': [1, 26, 60]},
+            'modules': [{'type': 'resources', 'uuid': str(uuid.uuid5(uuid.NAMESPACE_URL, 'https://github.com/mcneds/Copper-Speakers/bedrock/resources')), 'version': pack_version(version)}]})
         target = output / 'copper-speakers-bedrock.mcpack'
         with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as pack:
-            for name, data in sorted(files.items()): pack.writestr(name, data)
+            for name, data in sorted(files.items()): zip_bytes(pack, name, data)
         (output / 'copper-speakers-blocks.json').write_text(json.dumps({'format_version': 1, 'blocks': blocks}, indent=2))
         (output / 'copper-speakers-items.json').write_text(json.dumps({'format_version': 2, 'items': items}, indent=2))
         (output / 'display-models.json').write_text(json.dumps({'indices': display_models, 'geometries': native_geometries}, indent=2))
@@ -280,6 +281,7 @@ if __name__ == '__main__':
     parser.add_argument('--java-pack', type=Path, required=True)
     parser.add_argument('--client-jar', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--icons', type=Path, required=True)
+    parser.add_argument('--icons', type=Path, help='Optional icon overrides; otherwise icons are rendered from the models')
+    parser.add_argument('--version', default='0.3.0')
     args = parser.parse_args()
-    convert(args.java_pack, args.client_jar, args.output, args.icons)
+    convert(args.java_pack, args.client_jar, args.output, args.icons, args.version)

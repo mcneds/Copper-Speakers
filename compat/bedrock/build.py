@@ -1,65 +1,53 @@
 #!/usr/bin/env python3
-"""Build against the exact installed Geyser jar; writes only to --output."""
+"""Build and test the audio extension from explicit dependency inputs."""
 import argparse
-import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import zipfile
+from release_common import HERE, compile_java, zip_bytes
 
 
-def build(server, source, output, javac):
+def build(geyser, dependencies, output, javac, version, source=HERE):
     output.mkdir(parents=True, exist_ok=True)
-    geyser = server / 'mods/Geyser-Fabric.jar'
-    dependencies = [geyser, *sorted((server / 'libraries').rglob('*.jar'))]
+    classpath = [geyser, *dependencies]
     nested = output / 'dependencies'
     nested.mkdir(exist_ok=True)
-    # Fabric may put dependencies inside the mod jar rather than on its root.
     with zipfile.ZipFile(geyser) as jar:
         for index, name in enumerate(jar.namelist()):
             if name.endswith('.jar'):
                 path = nested / f'{index}.jar'
                 path.write_bytes(jar.read(name))
-                dependencies.append(path)
-    classpath = os.pathsep.join(map(str, dependencies))
-    (output / 'classpath.txt').write_text(classpath)
+                classpath.append(path)
     classes = output / 'classes'
-    classes.mkdir(exist_ok=True)
-    result = subprocess.run([str(javac), '--release', '21', '-cp', classpath, '-d', str(classes),
-                             *map(str, sorted((source / 'src').rglob('*.java')))])
-    if result.returncode: raise SystemExit(result.returncode)
-    catalogue_file = server / 'config/copper-speakers/tails/catalog.json'
-    catalogue = json.loads(catalogue_file.read_text()) if catalogue_file.exists() else {'tracks': {}}
-    events = []
-    for original, track in sorted(catalogue['tracks'].items()):
-        for entry in track['entries']:
-            key = entry['event'].replace(':', '\\:')
-            events.append(f'{key}={original}|{entry["offsetSeconds"]}')
-    (classes / 'audio-events.properties').write_text('\n'.join(events) + '\n', encoding='ascii')
-    shutil.copy2(source / 'extension.yml', classes / 'extension.yml')
-    target = output / 'CopperBedrock-0.1.0.jar'
-    with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as jar:
+    compile_java(javac, classpath, (source / 'src').rglob('*.java'), classes)
+    (classes / 'audio-events.properties').write_text('# Legacy mappings are loaded at runtime.\n', encoding='ascii')
+    (classes / 'extension.yml').write_text((source / 'extension.yml').read_text(encoding='utf-8').replace('${version}', version), encoding='utf-8')
+    test_classes = output / 'test-classes'
+    compile_java(javac, [classes, *classpath], (source / 'test').rglob('*.java'), test_classes)
+    java = Path(javac).with_name('java.exe' if os.name == 'nt' else 'java')
+    runtime = ['-cp', os.pathsep.join(map(str, [test_classes, classes, *classpath])),
+               'dev.mcneds.copperspeakers.bedrock.ProtocolSmoke']
+    runtime_args = output / 'test-java.args'
+    runtime_args.write_text('\n'.join('"' + arg.replace('\\', '/').replace('"', '\\"') + '"' for arg in runtime), encoding='utf-8')
+    subprocess.run([str(java), '@' + str(runtime_args)], check=True)
+    target = output / f'CopperBedrock-{version}.jar'
+    with zipfile.ZipFile(target, 'w') as jar:
         for path in sorted(classes.rglob('*')):
-            if path.is_file(): jar.write(path, path.relative_to(classes).as_posix())
-    print(f'Built {target} with {len(events)} prepared-audio events')
-    tests = sorted((source / 'test').rglob('*.java'))
-    if tests:
-        test_classes = output / 'test-classes'
-        test_classes.mkdir(exist_ok=True)
-        test_cp = str(classes) + os.pathsep + classpath
-        result = subprocess.run([str(javac), '--release', '21', '-cp', test_cp, '-d', str(test_classes), *map(str, tests)])
-        if result.returncode: raise SystemExit(result.returncode)
-        subprocess.run([str(javac.with_name('java')), '-cp', str(test_classes) + os.pathsep + test_cp,
-                        'net.mineandcraft.bedrockspeakers.ProtocolSmoke'], check=True)
-    return classpath, classes
+            if path.is_file(): zip_bytes(jar, path.relative_to(classes).as_posix(), path.read_bytes())
+        zip_bytes(jar, 'META-INF/LICENSE-Copper-Speakers', (HERE.parents[1] / 'LICENSE').read_bytes())
+    print('Built and tested', target, flush=True)
+    return target, classpath
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--server', required=True, type=Path)
-    parser.add_argument('--source', type=Path, default=Path(__file__).resolve().parent)
+    parser.add_argument('--geyser-jar', required=True, type=Path)
+    parser.add_argument('--classpath-file', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--version', required=True)
     parser.add_argument('--javac', type=Path, default=Path(shutil.which('javac') or 'javac'))
     args = parser.parse_args()
-    build(args.server, args.source, args.output, args.javac)
+    dependencies = [Path(p) for p in args.classpath_file.read_text(encoding='utf-8').strip().split(os.pathsep) if p]
+    build(args.geyser_jar.resolve(), dependencies, args.output.resolve(), args.javac, args.version)

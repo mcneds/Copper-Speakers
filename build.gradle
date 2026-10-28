@@ -1,6 +1,6 @@
 plugins { id 'net.fabricmc.fabric-loom' version '1.16.3' }
 group = 'dev.mcneds'
-version = '0.2.1+mineandcraft.3'
+version = project.mod_version
 base { archivesName = 'copper-speakers' }
 repositories {
     mavenCentral()
@@ -8,7 +8,7 @@ repositories {
     maven { url = 'https://api.modrinth.com/maven' }
 }
 dependencies {
-    minecraft 'com.mojang:minecraft:26.3'
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation 'net.fabricmc:fabric-loader:0.19.5'
     implementation 'net.fabricmc.fabric-api:fabric-api:0.163.0+26.3'
     implementation 'eu.pb4:polymer-core:0.18.4+26.3'
@@ -22,6 +22,10 @@ dependencies {
 }
 java { toolchain { languageVersion = JavaLanguageVersion.of(25) }; withSourcesJar() }
 tasks.named('jar') { from('LICENSE') }
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
 fabricApi {
     configureTests {
         createSourceSet = true
@@ -96,3 +100,28 @@ tasks.configureEach {
 // Disposable playback feasibility assets, generated locally; never in the release jar.
 sourceSets.gametest.resources.srcDir("build/generated/section-probe")
 sourceSets.gametest.resources.srcDir("build/generated/tail-probe")
+
+// Machine-readable, explicit inputs for the portable Bedrock/release builder.
+tasks.register('writeReleaseInputs') {
+    dependsOn 'classes', 'jar', 'sourcesJar', 'configureLaunch'
+    doLast {
+        def output = layout.buildDirectory.dir('release-inputs').get().asFile
+        output.mkdirs()
+        def dependencies = tasks.named('runServer').get().classpath.files.findAll { it.isFile() && it.name.endsWith('.jar') }
+        new File(output, 'classpath.txt').setText(dependencies.collect { it.absolutePath }.join(File.pathSeparator), 'UTF-8')
+        def compiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }.get()
+        def data = [version: project.version.toString(), minecraft: project.minecraft_version,
+            modJar: tasks.named('jar').get().archiveFile.get().asFile.absolutePath,
+            sourcesJar: tasks.named('sourcesJar').get().archiveFile.get().asFile.absolutePath,
+            clientJar: new File(gradle.gradleUserHomeDir, "caches/fabric-loom/${project.minecraft_version}/minecraft-client.jar").absolutePath,
+            javaPack: providers.gradleProperty('bedrockJavaPack').map { file(it).absolutePath }.getOrElse(file('build/run/gameTest/polymer/resource_pack.zip').absolutePath),
+            classpathFile: new File(output, 'classpath.txt').absolutePath, javac: compiler.executablePath.asFile.absolutePath]
+        new File(output, 'inputs.json').setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(data)) + '\n', 'UTF-8')
+    }
+}
+tasks.register('releaseBundle', Exec) {
+    dependsOn 'build', 'writeReleaseInputs'
+    def python = providers.gradleProperty('python').getOrElse(System.getProperty('os.name').startsWith('Windows') ? 'python' : 'python3')
+    commandLine python, 'tools/build-release.py', '--inputs', file('build/release-inputs/inputs.json').absolutePath,
+        '--output', providers.gradleProperty('releaseOutput').map { file(it).absolutePath }.getOrElse(file('build/release').absolutePath)
+}

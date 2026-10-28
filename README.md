@@ -16,7 +16,7 @@ Download these **three separate mod jars** for the `mods` folder:
 
 | Mod | Required version |
 | --- | --- |
-| **Copper Speakers** | **0.2.1+mineandcraft.3** for Minecraft **26.3** |
+| **Copper Speakers** | **0.3.0** for Minecraft **26.3** |
 | **Fabric API** | A release for Minecraft **26.3**; this project builds against **0.163.0+26.3** |
 | **Polymer bundle** | **0.18.4 or a later 0.18.x release** for Minecraft **26.3** |
 
@@ -36,11 +36,11 @@ Keep Polymer AutoHost enabled and allow its mod-required resource pack setting. 
 
 ### Bedrock through Geyser
 
-Bedrock playback is available through the separate **CopperBedrock** compatibility extension and a patched **GeyserDisplayEntity** bridge. Install both extensions, their matching Bedrock resource packs, and the generated block/item mappings on the server. Bedrock players accept the server packs; no client mod is required. Installing the Copper Speakers mod alone does not provide this integration.
+Download the **Bedrock Fabric bundle** from the same release as the Java mod. It contains both Geyser extensions, both resource packs and the matching block/item mappings, with an installation guide and checksums. Fabric API, Polymer and Geyser-Fabric are installed separately.
 
-The tested setup is Minecraft Java **26.3**, Geyser-Fabric **2.12.1-b1273**, and Bedrock **26.60** (protocol **2225**). Speaker range extension, including custom music, has been confirmed in game on Java and Bedrock. The companion handles buffered audio, prepared joining events, wire and resin geometry, wall-plate entities, and speaker-note particles. It uses Geyser internals, so other Geyser builds or Bedrock protocols need their own checks.
+The current bundle targets Geyser-Fabric **2.12.1 build 1273** and Bedrock **26.60 (protocol 2225)**. It uses Geyser internals; other builds require testing. If additional mods change Polymer's resource allocations, rebuild the bundle from your server's generated pack with the documented single command.
 
-With the compatibility bundle installed, core playback and speaker range extension have been confirmed in game. Relative timing between Bedrock audio sources is under investigation; Java timing benchmarks do not establish Bedrock synchronization. The socket-face restriction below applies on both editions. All 45 Minecraft tests and four graph tests pass. See [Bedrock support](compat/bedrock/README.md) for build and installation instructions, pinned dependencies, and verification limits.
+See [Bedrock setup](compat/bedrock/README.md) for installation, custom music and compatibility limits. Java audio benchmarks do not establish Bedrock playback timing.
 
 ## Build your first system
 
@@ -88,7 +88,7 @@ Built-in songs use buffered audio for closer alignment between speakers. Other s
 
 - Players already in the dimension can walk or teleport into range during playback, even if they were far away when the disc started.
 - Standalone jukeboxes use the same playback handling, including hopper insertion. No connected speaker is needed.
-- [Per-song controls](docs/wiki-music-bridge.md) prepare and register joining audio live, with 15-second joining points by default. Disable admissions independently or request deletion after playback and downloads release the audio.
+- Use `/copperspeakers sync enable <sound>` to enable reconnect synchronization for a prepared song, or add a quoted absolute source `.ogg` path for first-time preparation. Operators can also use `disable` and `status`. See [per-song commands](docs/late-listeners.md#per-song-control-while-the-server-runs) and [file-based controls](docs/prepared-joining.md).
 - With [prepared joining audio](docs/late-listeners.md), players who connect later or return from another dimension join the current song position after a short wait. Existing listeners keep playing continuously. This uses ordinary resource packs; no client mod is required.
 - Without prepared audio for that track, a new connection or dimension change still requires a fresh insertion. All normal discs remain playable through speakers.
 - Up to **four additional speakers at a time** can join during a track, including the first speaker connected to a playing standalone jukebox. Disconnecting one of these frees its slot. Further speakers wait for a slot or the next insertion.
@@ -116,7 +116,9 @@ With a Java 25 JDK:
 ./gradlew.bat build
 ```
 
-The release jar is `build/libs/copper-speakers-0.2.1+mineandcraft.3.jar`. The build runs graph unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
+The release jar is `build/libs/copper-speakers-0.3.0.jar`. The build runs unit tests and Fabric server GameTests. Test fixtures and audio observation code are excluded from the release jar.
+
+To build the Java mod and the full Bedrock release bundle together, run `./gradlew releaseBundle` after installing the [build dependencies](docs/releases.md). CI runs this same command for pull requests, main-branch changes and release tags.
 
 See [Development](docs/development.md) for local launches, client checks and asset generation. Bedrock requires the separate compatibility setup described above; the Java client benchmarks below do not measure Bedrock timing.
 

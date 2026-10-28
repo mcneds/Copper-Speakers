@@ -5,9 +5,8 @@ import subprocess
 
 resources = Path(__file__).resolve().parents[1] / 'src/gametest/resources'
 name = 'disc_a1111111111141118111111111111111'
-# Retain the original fixture namespace as regression coverage. No external service
-# or private pack generator is needed to regenerate these synthetic test assets.
-namespace = 'mineandcraft_music'
+# Use a generic namespace; the fixture does not depend on any external music service.
+namespace = 'example_music'
 asset_dir = resources / 'assets' / namespace
 song_dir = resources / 'data' / namespace / 'jukebox_song'
 (asset_dir / 'sounds/music').mkdir(parents=True, exist_ok=True)
@@ -27,14 +26,14 @@ sounds = {name: {'sounds': [{'name': namespace + ':music/' + name, 'stream': Tru
                                          'type': 'file', 'stream': False, 'preload': False}]}}
 (asset_dir / 'sounds.json').write_text(json.dumps(sounds, indent=2) + '\n')
 
-song_dir = resources / 'data/mineandcraft_music/jukebox_song'
+song_dir = resources / 'data/example_music/jukebox_song'
 original = json.loads((song_dir / (name + '.json')).read_text())
 for suffix in ('missing', 'stale', 'wrong_alias', 'replaced'):
-    sound = 'mineandcraft_music:disc_' + suffix
+    sound = 'example_music:disc_' + suffix
     song = {**original, 'sound_event': {'sound_id': sound if suffix != 'replaced' else 'minecraft:music_disc.cat'}}
     (song_dir / ('disc_' + suffix + '.json')).write_text(json.dumps(song, indent=2) + '\n')
     if suffix != 'missing':
-        alias = {**song, 'sound_event': {'sound_id': 'mineandcraft_music:buffered.disc_' + suffix}}
+        alias = {**song, 'sound_event': {'sound_id': 'example_music:buffered.disc_' + suffix}}
         if suffix == 'stale': alias['length_in_seconds'] = 61.0
         if suffix == 'wrong_alias': alias['sound_event']['sound_id'] = 'minecraft:music_disc.cat'
         (song_dir / 'buffered' / ('disc_' + suffix + '.json')).write_text(json.dumps(alias, indent=2) + '\n')

@@ -16,8 +16,8 @@ import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 
 public final class CustomDiscGameTests {
-    public static final Identifier SONG = Identifier.parse("mineandcraft_music:disc_a1111111111141118111111111111111");
-    public static final Identifier SOUND = Identifier.parse("mineandcraft_music:buffered." + SONG.getPath());
+    public static final Identifier SONG = Identifier.parse("example_music:disc_a1111111111141118111111111111111");
+    public static final Identifier SOUND = Identifier.parse("example_music:buffered." + SONG.getPath());
     private static final String ARENA = "copper_speakers_tests:arena";
     private static final BlockPos MASTER = new BlockPos(2, 2, 5);
     private static final BlockPos WIRE = MASTER.east();
@@ -87,8 +87,8 @@ public final class CustomDiscGameTests {
     @GameTest(structure = ARENA) public void missingAndInvalidAliasesUseOriginalSongsOnSpeakers(GameTestHelper h) {
         var box = setup(h, true);
         var registry = h.getLevel().registryAccess().lookupOrThrow(Registries.JUKEBOX_SONG);
-        for (String id : new String[]{"mineandcraft_music:disc_missing", "mineandcraft_music:disc_stale",
-                "mineandcraft_music:disc_wrong_alias", "mineandcraft_music:disc_replaced", "copper_speakers_tests:unknown"}) {
+        for (String id : new String[]{"example_music:disc_missing", "example_music:disc_stale",
+                "example_music:disc_wrong_alias", "example_music:disc_replaced", "copper_speakers_tests:unknown"}) {
             var song = registry.get(Identifier.parse(id)).orElseThrow();
             check(BufferedSongs.resolve(registry, song) == null, "Unsafe alias rejected: " + id);
             box.setTheItem(disc(song));

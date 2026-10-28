@@ -24,3 +24,4 @@ results/
 art/
 *.jfr
 __pycache__/
+.local/

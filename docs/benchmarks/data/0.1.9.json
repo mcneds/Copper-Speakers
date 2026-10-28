@@ -15248,7 +15248,7 @@
         "rounds": 10,
         "sampleTicks": 40,
         "startupMethod": "Wall time before local server insertion to all sources observed playing; includes packet delivery and polling. Upper bound, not physical audio latency.",
-        "song": "mineandcraft_music:disc_a1111111111141118111111111111111",
+        "song": "example_music:disc_a1111111111141118111111111111111",
         "mods": [
           "copper_speakers=0.1.9",
           "copper_speakers_tests=1.0.0",
@@ -18137,7 +18137,7 @@
         "rounds": 10,
         "sampleTicks": 40,
         "startupMethod": "Wall time before local server insertion to all sources observed playing; includes packet delivery and polling. Upper bound, not physical audio latency.",
-        "song": "mineandcraft_music:disc_a1111111111141118111111111111111",
+        "song": "example_music:disc_a1111111111141118111111111111111",
         "mods": [
           "copper_speakers=0.1.9",
           "copper_speakers_tests=1.0.0",
@@ -22826,7 +22826,7 @@
         "rounds": 10,
         "sampleTicks": 40,
         "startupMethod": "Wall time before local server insertion to all sources observed playing; includes packet delivery and polling. Upper bound, not physical audio latency.",
-        "song": "mineandcraft_music:disc_a1111111111141118111111111111111",
+        "song": "example_music:disc_a1111111111141118111111111111111",
         "mods": [
           "copper_speakers=0.1.9",
           "copper_speakers_tests=1.0.0",

@@ -112,8 +112,11 @@ class VisualConversionTests(unittest.TestCase):
                 self.assertEqual(native['bones'][0]['cubes'][0]['origin'], [-2, -7, -5])
                 self.assertEqual(native['bones'][0]['pivot'], [0, 0, 0])
                 manifest = json.loads(z.read('manifest.json'))
-                self.assertEqual(manifest['header']['version'], [1, 2, 1])
+                self.assertEqual(manifest['header']['version'], [0, 3, 0])
                 self.assertFalse(any(n.startswith('attachables/') for n in z.namelist()))
+                icon = Image.open(io.BytesIO(z.read('textures/items/copperbedrock_test.png')))
+                self.assertEqual(icon.size, (64, 64))
+                self.assertIsNotNone(icon.getbbox(), 'Inventory icons must be generated without an external icon folder')
                 self.assertEqual(mappings['geometry'], geometry_name)
                 mesh_ids = {geo['description']['identifier'] for n in z.namelist() if n.endswith('.geo.json')
                             for geo in json.loads(z.read(n))['minecraft:geometry']}

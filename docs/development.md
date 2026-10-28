@@ -88,3 +88,7 @@ Dry bare wire uses a pressed weighted pressure plate carrier; dry insulated wire
 Wire risers, plate leads and sideways music notes use vanilla display entities. Editor overlays such as Axiom's Show Display Entities can expose their origin markers; those markers are not cable geometry. Music-note displays reference the vanilla note sprite and are independent of the client's particle-density setting.
 
 See [Audio compatibility](audio.md) for session behavior, optional custom-song buffering and client limits, and [Benchmark results](benchmarks/README.md) for published measurements. Local worlds, screenshots, deployment receipts and historical logs stay in ignored development directories.
+
+## Release builds
+
+See [Releases](releases.md) for the combined Java/Bedrock build, pinned dependencies, bundle contents and CI workflow. The release build needs no running Minecraft server or private music catalogue.
