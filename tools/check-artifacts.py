@@ -8,11 +8,14 @@ import zipfile
 parser = argparse.ArgumentParser()
 parser.add_argument("mod", type=Path)
 parser.add_argument("pack", type=Path)
+parser.add_argument("--allow-source-audio", action="store_true", help="Permit unrelated audio in a server-specific input pack; the mod must still contain none")
 args = parser.parse_args()
 with zipfile.ZipFile(args.mod) as mod, zipfile.ZipFile(args.pack) as pack:
     entries = mod.namelist()
     assert not any("/test/" in n or "AudioSmoke" in n or "CopperGameTests" in n for n in entries)
-    assert not any(n.endswith((".ogg", ".mp3", ".wav")) for n in entries + pack.namelist())
+    assert not any(n.endswith((".ogg", ".mp3", ".wav")) for n in entries)
+    source_audio = sum(n.endswith((".ogg", ".mp3", ".wav")) for n in pack.namelist())
+    assert args.allow_source_audio or source_audio == 0
     metadata = json.loads(mod.read("fabric.mod.json"))
     assert metadata["icon"] == "assets/copper_speakers/icon.png"
     assert struct.unpack(">II", mod.read(metadata["icon"])[16:24]) == (512, 512)
@@ -46,5 +49,5 @@ with zipfile.ZipFile(args.mod) as mod, zipfile.ZipFile(args.pack) as pack:
     assert wire_loot["pools"][1]["entries"][0]["condition"] == {
         "type": "minecraft:match_block", "blocks": "copper_speakers:copper_wire", "state": {"insulated": "true"}}
     print(json.dumps({"status":"passed", "aliases":len(sounds), "modBytes":args.mod.stat().st_size,
-                      "packBytes":args.pack.stat().st_size, "privateAudioFiles":0,
+                      "packBytes":args.pack.stat().st_size, "privateAudioFiles":0, "sourceAudioFiles":source_audio,
                       "productionTestClasses":0}, indent=2))

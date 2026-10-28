@@ -75,6 +75,7 @@ class VisualConversionTests(unittest.TestCase):
                     'north': {'texture': '#surface', 'uv': [1, 2, 13, 6]},
                     'up': {'texture': '#surface', 'uv': [1, 2, 13, 6]}}}]}
             with zipfile.ZipFile(java, 'w') as z:
+                z.writestr('assets/example_music/sounds/music/unrelated.ogg', b'unrelated input audio')
                 z.writestr('assets/copper_speakers/models/block/test.json', json.dumps(model))
                 z.writestr('assets/copper_speakers/textures/block/test.png', png.getvalue())
                 z.writestr('assets/copper_speakers/items/test.json', json.dumps({'model': {'type': 'minecraft:model', 'model': 'copper_speakers:block/test'}}))
@@ -114,6 +115,7 @@ class VisualConversionTests(unittest.TestCase):
                 manifest = json.loads(z.read('manifest.json'))
                 self.assertEqual(manifest['header']['version'], [0, 3, 0])
                 self.assertFalse(any(n.startswith('attachables/') for n in z.namelist()))
+                self.assertFalse(any(n.endswith(('.ogg', '.mp3', '.wav')) for n in z.namelist()))
                 icon = Image.open(io.BytesIO(z.read('textures/items/copperbedrock_test.png')))
                 self.assertEqual(icon.size, (64, 64))
                 self.assertIsNotNone(icon.getbbox(), 'Inventory icons must be generated without an external icon folder')

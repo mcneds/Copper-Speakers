@@ -111,6 +111,7 @@ tasks.register('writeReleaseInputs') {
         new File(output, 'classpath.txt').setText(dependencies.collect { it.absolutePath }.join(File.pathSeparator), 'UTF-8')
         def compiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }.get()
         def data = [version: project.version.toString(), minecraft: project.minecraft_version,
+            customJavaPack: providers.gradleProperty('bedrockJavaPack').isPresent(),
             modJar: tasks.named('jar').get().archiveFile.get().asFile.absolutePath,
             sourcesJar: tasks.named('sourcesJar').get().archiveFile.get().asFile.absolutePath,
             clientJar: new File(gradle.gradleUserHomeDir, "caches/fabric-loom/${project.minecraft_version}/minecraft-client.jar").absolutePath,

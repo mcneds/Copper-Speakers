@@ -63,6 +63,7 @@ def audit_bundle(stage, version):
     for pack in (geyser / 'packs').glob('*.mcpack'):
         with zipfile.ZipFile(pack) as archive:
             assert archive.testzip() is None
+            assert not any(n.endswith(('.ogg', '.mp3', '.wav')) for n in archive.namelist())
             manifest = json.loads(archive.read('manifest.json'))
             versions.append(manifest['header']['version'])
             assert all(m['version'] == pack_version(version) for m in manifest['modules'])
@@ -100,11 +101,13 @@ def build(inputs_file, output, cache, java_pack=None, client_jar=None):
         print('Verified pinned input:', path.name, flush=True)
         return name, path
     with ThreadPoolExecutor(max_workers=4) as pool: dependencies = dict(pool.map(download, pins['downloads'].items()))
+    custom_pack = java_pack is not None or inputs.get('customJavaPack', False)
     java_pack = (java_pack or Path(inputs['javaPack'])).resolve()
     client_jar = (client_jar or Path(inputs['clientJar'])).resolve()
     for file in (java_pack, client_jar, Path(inputs['modJar']), Path(inputs['sourcesJar'])):
         if not file.is_file(): raise FileNotFoundError('Missing release input: ' + str(file))
-    subprocess.run([sys.executable, str(ROOT / 'tools/check-artifacts.py'), inputs['modJar'], str(java_pack)], check=True)
+    subprocess.run([sys.executable, str(ROOT / 'tools/check-artifacts.py'), inputs['modJar'], str(java_pack),
+                    *(['--allow-source-audio'] if custom_pack else [])], check=True)
     classpath = [Path(p) for p in Path(inputs['classpathFile']).read_text(encoding='utf-8').split(__import__('os').pathsep) if p]
     classpath.append(dependencies['checkerQual'])
     javac = Path(inputs['javac'])
