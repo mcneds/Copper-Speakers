@@ -18,7 +18,6 @@ public final class ProtocolSmoke {
     public static void main(String[] args) {
         BlockPickingTest.run();
         try { ModTranslationsTest.run(); } catch (Exception e) { throw new AssertionError(e); }
-        try { PreparedEventCatalogTest.run(); } catch (Exception e) { throw new AssertionError(e); }
         try { BufferedSoundAliasesTest.run(); } catch (Exception e) { throw new AssertionError(e); }
         CoordinatedAudioTest.run();
         if (!CopperBedrock.bufferedSound("copper_speakers:buffered.cat").equals("copperbedrock:buffered.record.cat"))

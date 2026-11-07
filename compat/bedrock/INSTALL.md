@@ -19,11 +19,10 @@ from that server's generated Polymer resource pack using `-PbedrockJavaPack=...`
 `compatibility.json` contains the source pack fingerprint. The extension and its
 packs/mappings must come from the same build.
 
-Custom music stays in your own Java/Bedrock music packs. Prepared joining uses
-the original Bedrock recording plus playback offsets; no Java suffix audio is
-bundled. Local, unencrypted Bedrock packs are scanned at startup: matching
+Custom music stays in your own Java/Bedrock music packs. Local, unencrypted
+Bedrock packs are scanned at startup: matching
 non-streaming `<namespace>:buffered.<song>` definitions are selected automatically,
-including wiki songs during prepared playback and late joins. Reload/restart
+including wiki songs during ordinary playback. Reload/restart
 Geyser after replacing music packs. For remote/encrypted packs, differently named
 aliases or explicit overrides, copy `examples/sounds.json` to
 `config/Geyser-Fabric/extensions/copperbedrock/sounds.json` and edit its entries.

@@ -4,7 +4,6 @@ import dev.mcneds.copperspeakers.CopperSpeakers;
 import dev.mcneds.copperspeakers.block.CopperWireBlock;
 import dev.mcneds.copperspeakers.block.SpeakerBlock;
 import net.minecraft.core.*;
-import net.minecraft.resources.Identifier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
@@ -41,17 +40,12 @@ public final class AudioNetworks {
         Set<BlockPos> nodes;
         final Set<BlockPos> sources = new LinkedHashSet<>();
         final Map<UUID, ServerPlayer> listeners = new LinkedHashMap<>();
-        final Map<UUID, PendingListener> pending = new LinkedHashMap<>();
         final Map<BlockPos, SpeakerNotes> notes = new LinkedHashMap<>();
-        TailCatalog.Track track;
-        Identifier sound;
         Component description;
-        long epochNanos;
         SpareVoices voices;
-        boolean ended, dirty, timelineStarted, audioReleased;
+        boolean ended, dirty;
         Session(BlockPos master, Set<BlockPos> nodes) { this.master = master.immutable(); this.nodes = nodes; }
     }
-    private record PendingListener(ServerPlayer player, TailCatalog.Entry entry, long dueNanos, SpareVoices warmup) {}
     private BlockState state(BlockPos pos) {
         return unloaded.contains(ChunkPos.pack(pos)) ? Blocks.AIR.defaultBlockState() : LoadedBlocks.state(level, pos);
     }
@@ -86,7 +80,6 @@ public final class AudioNetworks {
 
         Session session = new Session(root, graph.nodes());
         session.description = song.value().description();
-        session.sound = song.value().soundEvent().value().location();
         boolean occupied = sessions.values().stream().anyMatch(s -> !s.ended && !s.sources.isEmpty()
                 && !Collections.disjoint(s.nodes, graph.nodes()));
         if (!occupied) {
@@ -98,22 +91,8 @@ public final class AudioNetworks {
         }
         sessions.put(root.immutable(), session);
         if (occupied) return true; // queued discs never auto-start mid-song
-        session.track = TailCatalog.find(level.getServer(), song.value().soundEvent().value().location());
-        if (session.track != null) {
-            TailCatalog.activate(level.getServer(), session, session.track);
-            session.voices = new SpareVoices(session.sources);
-            for (var player : level.players()) {
-                if (TailCatalog.ensureReady(player, session.track)) prepareListener(session, player, session.track.entries().getFirst());
-            }
-            // First-use marker construction/packet serialization can be expensive.
-            // The clients must get the whole preparation window after we send it.
-            session.epochNanos = System.nanoTime() + TailCatalog.PREPARATION_NANOS;
-            reschedulePending(session);
-            return true;
-        }
         // A client's old jukebox block entity sends a local 1011 when its chunk
-        // unloads. Standalone playback must survive that cleanup after a teleport,
-        // even when the track has no prepared catalogue entry.
+        // unloads. Standalone playback must survive that cleanup after a teleport.
         session.voices = graph.speakers().isEmpty() ? new SpareVoices(session.sources) : new SpareVoices();
         for (var player : level.players()) {
             // An online player can walk or teleport into range later. Start their
@@ -139,108 +118,13 @@ public final class AudioNetworks {
         packets.add(new ClientboundSetActionBarTextPacket(
                 Component.translatable("record.nowPlaying", session.description).withStyle(ChatFormatting.GREEN)));
     }
-    private void prepareListener(Session s, ServerPlayer player, TailCatalog.Entry entry) {
-        var warmup = new SpareVoices(1);
-        List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>();
-        warmup.appendStart(player, entry.sound(), packets);
-        player.connection.send(new ClientboundBundlePacket(packets));
-        long due = s.epochNanos + Math.round(entry.offsetSeconds() * 1_000_000_000);
-        long sent = System.nanoTime();
-        if (entry.offsetSeconds() > 0 && due - sent < TailCatalog.PREPARATION_NANOS) {
-            warmup.destroy(List.of(player));
-            var later = s.track.atOrAfter((sent + TailCatalog.PREPARATION_NANOS - s.epochNanos) / 1_000_000_000.0);
-            if (later != null) prepareListener(s, player, later);
-            return;
-        }
-        s.pending.put(player.getUUID(), new PendingListener(player, entry, due, warmup));
-    }
-    private void advancePrepared(Session s) {
-        if (!TailCatalog.admissionsAllowed(level.getServer(), s.sound)) {
-            cancelPreparations(s);
-            return;
-        }
-        long now = System.nanoTime();
-        boolean startedTimeline = false;
-        if (!s.timelineStarted && now - s.epochNanos > 150_000_000L
-                && s.pending.values().stream().anyMatch(p -> p.entry.offsetSeconds() == 0
-                    && p.player.level() == level
-                    && level.getServer().getPlayerList().getPlayer(p.player.getUUID()) == p.player)) {
-            // Nobody has heard the beginning yet, so defer it as a whole instead
-            // of skipping the introduction. Never move an audible session's epoch.
-            s.epochNanos = now;
-            reschedulePending(s);
-        }
-        for (var it = s.pending.values().iterator(); it.hasNext();) {
-            var pending = it.next();
-            var player = pending.player;
-            if (player.level() != level || level.getServer().getPlayerList().getPlayer(player.getUUID()) != player
-                    || TailCatalog.loading(player) || now - pending.dueNanos > 150_000_000L) {
-                pending.warmup.destroy(List.of(player));
-                it.remove();
-                continue;
-            }
-            pending.warmup.keepParkedOutOfEarshot(player);
-            if (now < pending.dueNanos) continue;
-            pending.warmup.destroy(List.of(player));
-            List<Packet<? super ClientGamePacketListener>> packets = new ArrayList<>();
-            appendJukeboxNotification(s, player, packets);
-            if (s.sources.stream().anyMatch(source -> player.distanceToSqr(
-                    source.getX() + .5, source.getY() + .5, source.getZ() + .5) < 64 * 64))
-                packets.add(new ClientboundSetActionBarTextPacket(s.description.copy().withStyle(ChatFormatting.GREEN)));
-            s.voices.appendStart(player, pending.entry.sound(), packets);
-            long sendTime = System.nanoTime();
-            if (pending.entry.offsetSeconds() == 0 && !s.timelineStarted) {
-                // Packet construction can trigger first-use class loading. Anchor
-                // the timeline to the actual initial send, after that work ends.
-                s.epochNanos = sendTime;
-                s.timelineStarted = true;
-                startedTimeline = true;
-            } else if (sendTime - pending.dueNanos > 150_000_000L) {
-                // This client's preparation took too long. Try a later entry;
-                // none of these packets have reached them or other listeners.
-                s.voices.forget(player, false);
-                it.remove();
-                continue;
-            }
-            player.connection.send(new ClientboundBundlePacket(packets));
-            s.listeners.put(player.getUUID(), player);
-            it.remove();
-        }
-        if (startedTimeline) reschedulePending(s);
-        for (var player : level.players()) {
-            if (s.listeners.containsKey(player.getUUID()) || s.pending.containsKey(player.getUUID())) continue;
-            double earliest = (now + TailCatalog.PREPARATION_NANOS - s.epochNanos) / 1_000_000_000.0;
-            var entry = s.track.atOrAfter(s.timelineStarted ? Math.max(0, earliest) : 0);
-            if (entry == null) continue;
-            if (!TailCatalog.ensureReady(player, s.track)) continue;
-            if (!s.timelineStarted && s.epochNanos < now + TailCatalog.PREPARATION_NANOS) {
-                s.epochNanos = now + TailCatalog.PREPARATION_NANOS;
-                reschedulePending(s);
-            }
-            prepareListener(s, player, entry);
-        }
-    }
-    private static void reschedulePending(Session s) {
-        s.pending.replaceAll((uuid, p) -> new PendingListener(p.player, p.entry,
-                s.epochNanos + Math.round(p.entry.offsetSeconds() * 1_000_000_000), p.warmup));
-    }
-    private void cancelPreparations(Session s) {
-        s.pending.values().forEach(p -> p.warmup.destroy(List.of(p.player)));
-        s.pending.clear();
-    }
-    public int preparationTicks(BlockPos master) {
-        var s = sessions.get(master);
-        return s != null && s.track != null ? (int)(TailCatalog.PREPARATION_NANOS / 50_000_000) : 0;
-    }
     /** Natural completion changes server state, but does not truncate delayed client buffers. */
     public boolean finish(BlockPos master, boolean natural) {
         Session s = sessions.get(master);
         if (s == null) return false;
         if (natural) {
             s.ended = true;
-            TailCatalog.deactivate(level.getServer(), s);
             if (s.voices != null && s.voices.voiceId(s.master) != -1) sendPositionalStop(s, s.master);
-            cancelPreparations(s);
             clearNotes(s);
             if (s.voices != null) s.voices.retireUnused(s.listeners.values());
         } else stop(master);
@@ -249,9 +133,7 @@ public final class AudioNetworks {
     public void stop(BlockPos master) {
         Session s = sessions.remove(master);
         if (s != null) {
-            TailCatalog.release(level.getServer(), s);
             if (s.voices != null && s.voices.voiceId(s.master) != -1) sendPositionalStop(s, s.master);
-            cancelPreparations(s);
             clearNotes(s);
             pruneListeners(s);
             for (BlockPos source : s.sources) if (s.voices == null || s.voices.voiceId(source) == -1)
@@ -356,14 +238,7 @@ public final class AudioNetworks {
             }
         }
         for (Session s : sessions.values()) {
-            if (s.ended && s.track != null && !s.audioReleased
-                    && System.nanoTime() > s.epochNanos + Math.round(s.track.durationSeconds() * 1_000_000_000L)
-                        + TailCatalog.PREPARATION_NANOS) {
-                TailCatalog.release(level.getServer(), s);
-                s.audioReleased = true;
-            }
             if (s.ended) continue;
-            if (s.track != null) advancePrepared(s);
             for (BlockPos source : s.sources) {
                 if (source.equals(s.master)) continue;
                 var block = state(source);

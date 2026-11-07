@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def prepare(mode):
     work = ROOT / "run" / mode
     work.mkdir(parents=True, exist_ok=True)
-    if mode in ("server", "smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes", "sections", "tails", "observe"):
+    if mode in ("server", "smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes", "sections", "tails"):
         (work / "eula.txt").write_text("eula=true\n")
     if mode == "server" and not (work / "server.properties").exists():
         (work / "server.properties").write_text(
@@ -23,7 +23,7 @@ def prepare(mode):
             "enable-rcon=true\nrcon.port=28902\nrcon.password=copper-local-development\nwhite-list=false\n"
             "gamemode=creative\nforce-gamemode=true\nspawn-protection=0\nview-distance=6\nsimulation-distance=6\n"
             "level-seed=1\nmotd=Copper Speakers isolated development\n")
-    if mode in ("smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes", "sections", "tails", "observe"):
+    if mode in ("smoke", "custom", "generic", "distance", "late", "wire", "plate", "notes", "sections", "tails"):
         config = work / "config/polymer/auto-host.json"
         config.parent.mkdir(parents=True, exist_ok=True)
         # Audio observation uses local test assets. Vanilla pack acceptance is tested separately.
@@ -49,8 +49,7 @@ def prepare(mode):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["client","server","smoke","custom","generic","distance","late","wire","plate","notes","sections","tails","observe","vanilla"])
-    parser.add_argument("--instance", help="Separate observer working directory")
+    parser.add_argument("mode", choices=["client","server","smoke","custom","generic","distance","late","wire","plate","notes","sections","tails","vanilla"])
     parser.add_argument("--name", required=True, help="New attempt name; existing reports are never overwritten")
     parser.add_argument("--java", type=Path)
     parser.add_argument("--heap", help="Explicit maximum heap, e.g. 2G")
@@ -71,11 +70,9 @@ def main():
         parser.error("--packaged applies only to the dedicated server")
     if not args.name.replace("-","").replace("_","").isalnum():
         parser.error("Use letters, digits, hyphens and underscores for the attempt name")
-    if args.instance and (args.mode != "observe" or not args.instance.isalnum()):
-        parser.error("--instance is an alphanumeric observer directory name")
     result = ROOT / "build/validation" / args.name
     result.mkdir(parents=True, exist_ok=False)
-    argname = {"client":"runClient", "server":"runServer", "smoke":"runClientGameTest", "custom":"runClientGameTest", "generic":"runClientGameTest", "distance":"runClientGameTest", "late":"runClientGameTest", "wire":"runClientGameTest", "plate":"runClientGameTest", "notes":"runClientGameTest", "sections":"runClientGameTest", "tails":"runClientGameTest", "observe":"runClientGameTest", "vanilla":"vanilla"}[args.mode]
+    argname = {"client":"runClient", "server":"runServer", "smoke":"runClientGameTest", "custom":"runClientGameTest", "generic":"runClientGameTest", "distance":"runClientGameTest", "late":"runClientGameTest", "wire":"runClientGameTest", "plate":"runClientGameTest", "notes":"runClientGameTest", "sections":"runClientGameTest", "tails":"runClientGameTest", "vanilla":"vanilla"}[args.mode]
     argfile = ROOT / "build" / (argname + ".args")
     if not argfile.exists():
         parser.error("Run gradlew prepareRuns first, with all clients stopped")
@@ -98,7 +95,7 @@ def main():
     runtime = args.java or ROOT / ".runtime/zulu25.38.107-ca-jre25.0.5-win_x64/bin/java.exe"
     if not runtime.exists():
         parser.error("Run tools/install-runtime.ps1 or pass --java")
-    work = prepare(args.mode) if not args.instance else ROOT / "run" / ("observe-" + args.instance)
+    work = prepare(args.mode)
     work.mkdir(parents=True, exist_ok=True)
     lock = ROOT / "build/runtime-locks" / f"{os.getpid()}.json"
     lock.parent.mkdir(parents=True, exist_ok=True)
@@ -107,9 +104,7 @@ def main():
     env["COPPER_SMOKE_OUTPUT"] = str(result / "audio.json")
     if args.mode == "tails":
         env["COPPER_TAILS_FUNCTIONAL_ONLY"] = str(args.diagnostic).lower()
-    if args.mode == "observe":
-        env["COPPER_OBSERVER_FUNCTIONAL_ONLY"] = str(args.diagnostic).lower()
-    if args.mode in ("custom", "generic", "distance", "late", "wire", "plate", "notes", "sections", "tails", "observe"):
+    if args.mode in ("custom", "generic", "distance", "late", "wire", "plate", "notes", "sections", "tails"):
         env["COPPER_CLIENT_TEST"] = args.mode
         env["COPPER_" + args.mode.upper() + "_OUTPUT"] = str(result / (args.mode + ".json"))
     else:
@@ -143,7 +138,7 @@ def main():
                 status["status"] = "invalid-measurement" if args.mode == "smoke" else "failed-launch-or-test"
             else:
                 status["status"] = "complete"
-        elif args.mode in ("generic", "distance", "late", "wire", "plate", "notes", "sections", "tails", "observe"):
+        elif args.mode in ("generic", "distance", "late", "wire", "plate", "notes", "sections", "tails"):
             report = result / (args.mode + ".json")
             status["status"] = "complete" if code == 0 and report.exists() and json.loads(report.read_text())["status"] == "complete" else "failed-launch-or-test"
         (result / "launch.json").write_text(json.dumps(status, indent=2))

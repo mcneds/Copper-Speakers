@@ -45,15 +45,15 @@ The smoke test observes actual insertion packets and the unchanged client audio 
 
 The generic custom-disc test uses a streamed song in an unrelated namespace, with a sound event named differently from the song and no buffered alias. It checks original and spare sources, late speaker attachment, disconnection, reconnection and stopping. Streaming queue offsets are not whole-track clocks, so this test makes no synchronization measurement claim.
 
-The late-join test checks native source continuity and shared buffers. Distance, wire, plate and note tests cover loaded-network range and client visuals. All observation helpers and synthetic audio live in `src/gametest` and are excluded from the distributable.
+The late-speaker-attachment test (`late`) checks native source continuity and shared buffers; it does not test players reconnecting midway through a song. Distance, wire, plate and note tests cover loaded-network range and client visuals. All observation helpers and synthetic audio live in `src/gametest` and are excluded from the distributable.
 
 `--diagnostic` limits JIT compilation and processor count to work around a documented native JVM startup problem on the development machine. Use diagnostic runs for functionality only; they are rejected for the `smoke` and `sections` timing modes. In `tails` mode, diagnostic runs omit all timing observations and report only continuity assertions. Never count failed or incomplete launches as passing tests.
 
 ## Audio benchmarks
 
-The experimental [late-listener section probe](benchmarks/late-join-feasibility.md) measured boundary timing. The [prepared-tail probe](benchmarks/late-join-tails.md) investigated continuous cropped tracks; 0.2.0 builds on that approach with production scheduling and per-player pack delivery. See [late-listener setup and verification](late-listeners.md).
+The experimental [late-listener section probe](benchmarks/late-join-feasibility.md) measured boundary timing. The [prepared-tail probe](benchmarks/late-join-tails.md) investigated continuous cropped tracks. These are historical experiments; prepared mid-song joining and its pack delivery have been removed. See [current joining behavior](late-listeners.md).
 
-`--pretouch-stacks` enables HotSpot's `AlwaysPreTouchStacks` diagnostic option while retaining normal JIT compilation. It works around native shader-related stack-commit faults observed on the Windows test machine. It is a test-runtime setting, not a mod or client requirement. The two-client runner records it explicitly; `--diagnostic` remains functionality-only.
+`--pretouch-stacks` enables HotSpot's `AlwaysPreTouchStacks` diagnostic option while retaining normal JIT compilation. It works around native shader-related stack-commit faults observed on the Windows test machine. It is a test-runtime setting, not a mod or client requirement. `--diagnostic` remains functionality-only.
 
 ```powershell
 ./gradlew.bat build prepareRuns

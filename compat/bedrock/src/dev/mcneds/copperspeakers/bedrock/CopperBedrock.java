@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Properties;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import com.google.gson.JsonParser;
@@ -18,7 +17,6 @@ import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionJoinEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
-import org.geysermc.geyser.api.event.lifecycle.GeyserShutdownEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCommandsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntitiesEvent;
 import org.geysermc.geyser.api.entity.custom.CustomEntityDefinition;
@@ -50,12 +48,10 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.Clien
 
 /** Compatibility for Copper Speakers on Geyser 2.12.1-b1273 / Bedrock 26.60. */
 public final class CopperBedrock implements Extension {
-    private final Map<String, Recording> recordings = new ConcurrentHashMap<>();
     private final Map<String, String> soundMappings = new ConcurrentHashMap<>();
     private Map<String, String> bufferedAliases = Map.of();
     private final Map<GeyserSession, Listener> listeners = new ConcurrentHashMap<>();
     private boolean installed;
-    private PreparedEventCatalog liveRecordings;
     private static final int BEDROCK_26_60 = 2225;
 
     record Recording(String sound, float offset) {}
@@ -136,20 +132,6 @@ public final class CopperBedrock implements Extension {
             var mappings = JsonParser.parseString(Files.readString(customSounds)).getAsJsonObject();
             for (var mapping : mappings.entrySet()) soundMappings.put(mapping.getKey(), mapping.getValue().getAsString());
         }
-        Properties properties = new Properties();
-        try (var input = getClass().getResourceAsStream("/audio-events.properties")) {
-            if (input == null) throw new IOException("Missing prepared-audio event catalogue");
-            properties.load(input);
-        }
-        for (String key : properties.stringPropertyNames()) {
-            String[] value = properties.getProperty(key).split("\\|", -1);
-            float offset = Float.parseFloat(value[1]);
-            if (!Float.isFinite(offset) || offset < 0) throw new IOException("Invalid playback offset");
-            recordings.put(key, new Recording(mappedSound(value[0]), offset));
-        }
-        liveRecordings = new PreparedEventCatalog(Path.of(System.getProperty("copperbedrock.preparedEvents",
-                "config/copper-speakers/joining/events.json")), message -> logger().warning(message));
-        liveRecordings.start();
         replace(ClientboundAddEntityPacket.class, this::addEntity);
         wrap(ClientboundEntityPositionSyncPacket.class, this::moveEntity, false);
         wrap(ClientboundRemoveEntitiesPacket.class, this::removeEntities, true);
@@ -162,8 +144,7 @@ public final class CopperBedrock implements Extension {
                 CopperFrameEntity::new, key, frame.height(), frame.width(), frame.offset(),
                 frame.defaultBedrockDefinition(), frame.translators()));
         installed = true;
-        logger().info("Copper Speakers Bedrock audio enabled with " + recordings.size()
-                + " prepared events and " + bufferedAliases.size() + " discovered buffered aliases");
+        logger().info("Copper Speakers Bedrock audio enabled with " + bufferedAliases.size() + " discovered buffered aliases");
     }
 
     @Subscribe
@@ -172,10 +153,6 @@ public final class CopperBedrock implements Extension {
             Listener listener = listeners.remove(session);
             if (listener != null) listener.audio.close();
         }
-    }
-
-    @Subscribe public void shutdown(GeyserShutdownEvent event) {
-        if (liveRecordings != null) liveRecordings.close();
     }
 
     @Subscribe
@@ -290,12 +267,6 @@ public final class CopperBedrock implements Extension {
     }
 
     Recording recording(String name) {
-        var decoded = PreparedEventCatalog.decode(name);
-        if (decoded != null) return new Recording(mappedSound(decoded.sound()), decoded.offsetSeconds());
-        var live = liveRecordings == null ? null : liveRecordings.find(name);
-        if (live != null) return new Recording(mappedSound(live.sound()), live.offsetSeconds());
-        Recording recording = recordings.get(name);
-        if (recording != null) return recording;
         if (name.contains(":buffered.") || soundMappings.containsKey(name) || bufferedAliases.containsKey(name))
             return new Recording(mappedSound(name), 0);
         return null;

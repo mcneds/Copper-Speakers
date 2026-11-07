@@ -31,9 +31,9 @@ Use the extensions, packs and mappings from the same bundle. The release's `SHA2
 
 The supported target is Java **26.3**, Java runtime **25**, Geyser-Fabric **2.12.1 build 1273**, and Bedrock **26.60 / protocol 2225**. Dependency URLs, checksums and the display source commit are in [dependencies.lock.json](dependencies.lock.json). Other Geyser builds need recompilation and protocol/client checks because this integration uses internal APIs.
 
-CopperBedrock translates entity-bound audio anchors into Bedrock sound handles. It preserves current song positions when a spare voice moves to a speaker and uses original audio plus playback offsets for prepared late joins. New prepared events are self-describing; legacy events can be refreshed from the [runtime mapping file](../../docs/prepared-joining.md). Adding a song does not require rebuilding the extension.
+CopperBedrock translates entity-bound audio anchors into Bedrock sound handles. It preserves current song positions when a spare voice moves to a speaker. Adding a song does not require rebuilding the extension.
 
-Prepared starts at a nonzero position reopen silently, seek the running voices to their shared clock, and unmute as one ordered group. This handles native Bedrock losing the opening offset after a dimension change. Playback from the beginning keeps the coordinated startup introduced in 0.3.2. Ejection, replacement and disconnect cancel pending seeks and unmutes.
+Playback from the beginning keeps coordinated startup. Speaker attachments seek to the existing song position. Ejection, replacement and disconnect cancel pending seeks and unmutes.
 
 The visual converter preserves the supplied Java pack's models and allocated states. The display fork renders Copper meshes and note particles while retaining upstream behavior for other displays. Wall plates retain their frame IDs and orientation. A scoped protocol-2225 hook supplies empty/unit-cube voxel shapes only when Geyser sends an empty registry.
 
@@ -60,13 +60,11 @@ The published bundle uses the baseline allocations generated with Copper Speaker
 ./gradlew releaseBundle -PbedrockJavaPack=/path/to/polymer/resource_pack.zip -PreleaseOutput=build/my-server-bundle
 ```
 
-This reads that pack and writes a new bundle locally. It neither edits the pack nor contacts its server. `compatibility.json` records a content fingerprint of the source allocations/assets. Install the two extensions, packs and mappings from the same bundle. Prepared joining settings and ordinary music publication do not alter these visual allocations.
+This reads that pack and writes a new bundle locally. It neither edits the pack nor contacts its server. `compatibility.json` records a content fingerprint of the source allocations/assets. Install the two extensions, packs and mappings from the same bundle. Ordinary music publication does not alter these visual allocations.
 
 ## Custom music
 
-Keep your original music in its ordinary Java and Bedrock packs. This bundle includes buffered aliases for vanilla discs, not music files. At startup CopperBedrock reads Geyser's loaded, local, unencrypted Bedrock packs and automatically selects `<namespace>:buffered.<song>` when it is a non-streaming counterpart of `<namespace>:<song>` with the same audio files and playback settings. This includes wiki-generated custom songs during ordinary playback, prepared starts and late joins; no per-song mapping is needed. Existing buffered event names and prepared playback offsets are preserved.
-
-For players connecting after insertion or entering from another dimension, enable [prepared joining](../../docs/late-listeners.md#per-song-control-while-the-server-runs) for each original sound identifier, using its published mono Ogg/Vorbis source. Once preparation reports `ready`, start a new disc session to activate it. New arrivals then join at a prepared point on the existing timeline; current listeners keep playing. Normal distance entry for players already in the dimension uses the sources started at insertion.
+Keep your original music in its ordinary Java and Bedrock packs. This bundle includes buffered aliases for vanilla discs, not music files. At startup CopperBedrock reads Geyser's loaded, local, unencrypted Bedrock packs and automatically selects `<namespace>:buffered.<song>` when it is a non-streaming counterpart of `<namespace>:<song>` with the same audio files and playback settings. This includes wiki-generated custom songs during ordinary playback; no per-song mapping is needed. Existing buffered event names are preserved.
 
 After publishing an updated music pack, reload/restart Geyser so it loads both the pack and its aliases; no extension rebuild is needed. Missing, streamed or mismatched aliases retain the original event. Remote/encrypted packs and differently named aliases can use an explicit mapping in the CopperBedrock extension's data folder as `sounds.json`; explicit entries take precedence over automatic discovery:
 
@@ -74,9 +72,11 @@ After publishing an updated music pack, reload/restart Geyser so it loads both t
 {"example_music:evening": "example_music:buffered.evening"}
 ```
 
-The target definition must exist in your Bedrock music pack. Mappings are loaded at extension startup. Prepared joining uses the original recording and an offset, so it does not require the Java suffix packs on Bedrock. The local [per-song control interface](../../docs/prepared-joining.md) remains independent of music publication.
+The target definition must exist in your Bedrock music pack. Mappings are loaded at extension startup.
 
-On a dedicated server, operators can use `/copperspeakers sync enable <sound>`, `/copperspeakers sync disable <sound>` and `/copperspeakers sync status <sound>`. First-time preparation accepts a quoted absolute server path to a mono Ogg/Vorbis recording after the sound identifier. Wait for `ready`, then reinsert the disc to start a session with the new settings. These commands prepare Java rejoin audio; publish the original recording in the Bedrock music pack separately. See [command examples](../../docs/late-listeners.md#per-song-control-while-the-server-runs).
+Players connecting or changing dimensions during a song wait for the next song or a fresh disc insertion. Prepared mid-song joining, its additional audio packs and `/copperspeakers sync` have been removed.
+
+When upgrading, update both the Java mod and CopperBedrock. Remove the obsolete server joining-audio directories using the [migration notes](../../docs/late-listeners.md), preserving original recordings and ordinary Java/Bedrock music packs. The main Polymer pack and normal Bedrock packs are still required.
 
 ## Verification and source
 

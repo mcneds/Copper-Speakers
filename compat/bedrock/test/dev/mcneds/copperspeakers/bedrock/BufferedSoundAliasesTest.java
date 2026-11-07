@@ -42,24 +42,19 @@ final class BufferedSoundAliasesTest {
 
             var extension = new CopperBedrock();
             extension.loadSoundAliases(List.of(pack), warnings::add);
-            String event = "copper_speakers:tail/v1/"
-                    + HexFormat.of().formatHex(ORIGINAL.getBytes(StandardCharsets.UTF_8))
-                    + "/0123456789abcdef01234567/48000/720000";
-            var prepared = extension.recording(event);
-            if (prepared == null || !prepared.sound().equals(BUFFERED) || prepared.offset() != 15)
-                throw new AssertionError("Prepared rejoin must select the buffered recording and preserve its seek offset");
             if (!extension.recording(ORIGINAL).sound().equals(BUFFERED)
-                    || !extension.recording(BUFFERED).sound().equals(BUFFERED))
+                    || !extension.recording(BUFFERED).sound().equals(BUFFERED)
+                    || extension.recording(ORIGINAL).offset() != 0)
                 throw new AssertionError("Normal and already-buffered playback must select the same recording");
             // New songs become available after the packs are reloaded, without an extension rebuild.
             pack(pack, DEFINITIONS.replace("disc_test", "disc_new"));
             extension.loadSoundAliases(List.of(pack), warnings::add);
-            String newEvent = event.replace(HexFormat.of().formatHex(ORIGINAL.getBytes(StandardCharsets.UTF_8)),
-                    HexFormat.of().formatHex("mineandcraft_music:disc_new".getBytes(StandardCharsets.UTF_8)));
-            if (!extension.recording(newEvent).sound().equals("mineandcraft_music:buffered.disc_new"))
-                throw new AssertionError("New wiki songs require neither manual mappings nor recompilation");
-            if (!extension.recording(event).sound().equals(ORIGINAL))
-                throw new AssertionError("Removed aliases must fall back to the original recording");
+            if (!extension.recording("mineandcraft_music:disc_new").sound().equals("mineandcraft_music:buffered.disc_new"))
+                throw new AssertionError("New songs require neither manual mappings nor recompilation");
+            if (extension.recording(ORIGINAL) != null)
+                throw new AssertionError("Removed aliases must fall back to the default translator");
+            if (extension.recording("copper_speakers:tail/v1/removed") != null)
+                throw new AssertionError("Removed prepared joining events must not be translated");
 
             pack(pack, DEFINITIONS);
             for (String bad : List.of(
@@ -76,7 +71,7 @@ final class BufferedSoundAliasesTest {
             var recovered = BufferedSoundAliases.load(List.of(pack, override), warnings::add);
             if (!recovered.equals(aliases) || warnings.isEmpty())
                 throw new AssertionError("A malformed unrelated pack must not break working aliases");
-            System.out.println("PASS: installed pack alias discovery, wiki prepared rejoin offsets, new songs, explicit overrides and safe fallback");
+            System.out.println("PASS: installed pack alias discovery, ordinary playback, new songs, explicit overrides and safe fallback");
         } finally {
             Files.deleteIfExists(pack); Files.deleteIfExists(override); Files.delete(root);
         }

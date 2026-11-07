@@ -88,14 +88,13 @@ Built-in songs use buffered audio for closer alignment between speakers. Other s
 
 - Players already in the dimension can walk or teleport into range during playback, even if they were far away when the disc started.
 - Standalone jukeboxes use the same playback handling, including hopper insertion. No connected speaker is needed.
-- Use `/copperspeakers sync enable <sound>` to enable reconnect synchronization for a prepared song, or add a quoted absolute source `.ogg` path for first-time preparation. Operators can also use `disable` and `status`. See [per-song commands](docs/late-listeners.md#per-song-control-while-the-server-runs) and [file-based controls](docs/prepared-joining.md).
-- With [prepared joining audio](docs/late-listeners.md), players who connect later or return from another dimension join the current song position after a short wait. Existing listeners keep playing continuously. This uses ordinary resource packs; no client mod is required.
-- Enabled prepared audio loads with the resource packs at login, avoiding another resource-loading screen on first playback. Songs prepared or enabled after you connect can still require a one-time pack load; reconnect to preload them.
-- Without prepared audio for that track, a new connection or dimension change still requires a fresh insertion. All normal discs remain playable through speakers.
+- Players who connect or change dimensions during a song hear the next song, or can hear the current song after the disc is ejected and reinserted. No prepared audio or extra joining packs are generated or downloaded.
 - Up to **four additional speakers at a time** can join during a track, including the first speaker connected to a playing standalone jukebox. Disconnecting one of these frees its slot. Further speakers wait for a slot or the next insertion.
 - The first active jukebox owns a connected network. A second disc on that network waits silently and must be ejected and reinserted to start its own group.
 - Copper Speakers does not keep chunks loaded. Unloading the main jukebox ends its session; returning or restarting the game does not resume it.
 - Large groups can reach the client's sound-channel limit. Networks are limited to **4,096 nodes**; an oversized network leaves the jukebox playing alone.
+
+When upgrading from prepared joining, remove the unused `config/copper-speakers/tails/` and `config/copper-speakers/joining/` directories to reclaim storage. Preserve original recordings and ordinary music resource packs; move any originals stored under `joining/sources/` out before deleting that directory. The `/copperspeakers sync` commands have been removed. See [joining behavior and migration](docs/late-listeners.md).
 
 Buffered songs must decode before they begin, and long songs can take more time and client memory. Ejection, hopper extraction or immediate replacement stops any remaining audio, including a delayed ending. See [Audio compatibility](docs/audio.md) for the playback model and limits.
 
@@ -125,7 +124,7 @@ See [Development](docs/development.md) for local launches, client checks and ass
 
 ## Benchmarks
 
-The **0.2.0 late-listener benchmark** uses two separate clients and the packaged server mod. It checks late login, entering range, uninterrupted existing sources, speaker attachment, dimension return and independent networks.
+The historical **0.2.0 late-listener benchmark** measured the former prepared joining feature, which has been removed. It does not describe current reconnect behavior.
 
 ![Copper Speakers 0.2.0 late-listener timing](docs/benchmarks/late-listeners/joining.png)
 

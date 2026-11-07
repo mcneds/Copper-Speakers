@@ -15,7 +15,6 @@ dependencies {
     implementation 'eu.pb4:polymer-blocks:0.18.4+26.3'
     implementation 'eu.pb4:polymer-resource-pack:0.18.4+26.3'
     implementation 'eu.pb4:polymer-virtual-entity:0.18.4+26.3'
-    compileOnly 'eu.pb4:polymer-autohost:0.18.4+26.3'
     runtimeOnly 'maven.modrinth:polymer:G0fTdl8M'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -49,7 +48,6 @@ loom {
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 25 }
 tasks.withType(Test).configureEach { useJUnitPlatform() }
 processResources { inputs.property 'version', project.version; filesMatching('fabric.mod.json') { expand version: project.version } }
-processResources { from('tools/prepare-join-audio.py') { into 'copper-speakers' } }
 tasks.withType(JavaExec).configureEach {
     if (name.toLowerCase().contains('client') && providers.gradleProperty('performanceMods').isPresent()) classpath += configurations.clientPerformance
     if (providers.gradleProperty('runtimeJava').isPresent()) executable = providers.gradleProperty('runtimeJava').get()

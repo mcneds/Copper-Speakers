@@ -13,7 +13,7 @@ import net.minecraft.world.entity.PositionPath;
 import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
-/** Packet-only audio anchors, shared by original playback and prepared late admissions. */
+/** Packet-only audio anchors for standalone playback and speakers attached during a song. */
 final class SpareVoices {
     static final int CAPACITY = 4;
     private static final double PARKING_HEIGHT = 4096;

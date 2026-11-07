@@ -1,5 +1,7 @@
 # Copper Speakers 0.2.0: separate-client late listeners
 
+This is an archive of the removed prepared mid-song joining feature. Current builds wait for the next song or a fresh insertion after a player connects or changes dimensions; see [current joining behavior](../../late-listeners.md). The reproduction commands below require a separate checkout of historical commit `57e76c3`, which still includes the preparation and two-client tools.
+
 The packaged server mod admits a new listener to the running song without restarting existing listeners. These measurements use two independent Minecraft audio engines on a loopback server. A separate untouched-client check verifies that no client mod is required.
 
 ![Measured late-listener timelines](joining.png)
