@@ -1,5 +1,7 @@
 # Building and maintaining releases
 
+GeyserDisplayEntity 1.0.14 inputs are archived in the [pinned build-input release](https://github.com/mcneds/Copper-Speakers/releases/tag/build-inputs-display-1.0.14), including the complete upstream source and AGPL license. `dependencies.lock.json` retains the original upstream URLs as provenance and verifies the same SHA-256 values when downloading from the archive. This avoids depending on upstream replacing assets under its rolling `latest` release.
+
 `./gradlew releaseBundle` is the common local and CI entry point. It requires JDK 25, Python 3.11+ and `python -m pip install -r compat/bedrock/requirements.txt`. Use `gradlew.bat` on Windows and `-Ppython=/path/to/python` for a virtual environment.
 
 The build runs Minecraft GameTests and JUnit tests, audits the Java mod/pack, downloads pinned Bedrock build inputs, compiles and tests CopperBedrock, converts the visual pack, rebuilds the patched display extension, includes its corresponding source and licenses, and audits the complete bundle. Neither an installed server nor prepared song audio is needed. Only the server-side mod and the separate Geyser compatibility files are distributed; Fabric API, Polymer, Geyser and Minecraft itself are not bundled.
